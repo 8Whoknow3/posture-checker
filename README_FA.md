@@ -1,29 +1,30 @@
-# Posture Checker
-
-A web-based computer vision application for analyzing sitting posture using a webcam or uploaded images.
-
-The application detects human pose landmarks with **MediaPipe Pose Landmarker**, calculates posture-related metrics, and provides an overall posture assessment.
+# دستیار تحلیل وضعیت نشستن
 
 [🇬🇧 English](README.md) | [🇮🇷 فارسی](README_FA.md)
 
-## Features
+یک سامانه وب مبتنی بر بینایی ماشین برای تحلیل وضعیت نشستن با استفاده از وبکم یا تصاویر آپلودشده.
 
-* Image upload and analysis
-* Webcam capture and analysis
-* Real-time posture analysis
-* WebSocket-based live processing
-* MediaPipe Pose Landmarker
-* Posture metrics and overall assessment
-* Annotated pose visualization
-* REST API
-* Health check endpoint
-* Error handling
-* Unit and integration tests
-* WebSocket performance testing
+این سامانه با استفاده از **MediaPipe Pose Landmarker** نقاط کلیدی بدن را تشخیص می‌دهد، شاخص‌های مرتبط با وضعیت بدن را محاسبه می‌کند و یک ارزیابی کلی از وضعیت نشستن ارائه می‌دهد.
 
-## Architecture
+## قابلیت‌ها
 
-The application follows a lightweight layered architecture that separates the web interface, API layer, posture analysis, computer vision, and utility components.
+- تحلیل تصاویر آپلودشده
+- تحلیل تصویر ثبت‌شده با وبکم
+- تحلیل بلادرنگ وضعیت نشستن
+- پردازش زنده با WebSocket
+- تشخیص Pose با MediaPipe Pose Landmarker
+- محاسبه شاخص‌های وضعیت بدن
+- ارزیابی کلی وضعیت
+- نمایش Skeleton و نقاط Pose روی تصویر
+- REST API
+- Health Check
+- مدیریت خطا
+- تست‌های Unit و Integration
+- تست Performance برای WebSocket
+
+## معماری
+
+این پروژه از یک معماری لایه‌ای سبک استفاده می‌کند که رابط کاربری، API، منطق تحلیل وضعیت بدن، بینایی ماشین و ابزارهای کمکی را از یکدیگر جدا می‌کند.
 
 ```text
                          ┌──────────────────────────┐
@@ -78,21 +79,20 @@ The application follows a lightweight layered architecture that separates the we
                          └──────────────────────────┘
 ```
 
-### Main Components
+### اجزای اصلی
 
-| Component           | Responsibility                                                                        |
-| ------------------- | ------------------------------------------------------------------------------------- |
-| **Frontend**        | User interface, image upload, webcam access, live communication, and result rendering |
-| **Analyze Route**   | Handles single-image REST requests                                                    |
-| **WebSocket Route** | Handles real-time posture analysis                                                    |
-| **PostureService**  | Coordinates pose detection, posture analysis, and annotated results                   |
-| **PoseDetector**    | Wraps MediaPipe Pose Landmarker for IMAGE and LIVE_STREAM modes                       |
-| **Posture Metrics** | Calculates posture-related metrics and overall assessment                             |
-| **Serializer**      | Converts internal analysis results into API/WebSocket responses                       |
-| **Utilities**       | Image encoding/decoding and pose visualization                                        |
+| جزء                 | مسئولیت                                                             |
+| ------------------- | ------------------------------------------------------------------- |
+| **Frontend**        | رابط کاربری، آپلود تصویر، دسترسی به وبکم، ارتباط زنده و نمایش نتایج |
+| **Analyze Route**   | پردازش درخواست‌های تحلیل تصویر                                      |
+| **WebSocket Route** | مدیریت تحلیل بلادرنگ                                                |
+| **PostureService**  | هماهنگ‌سازی تشخیص Pose، تحلیل وضعیت و تولید نتیجه                   |
+| **PoseDetector**    | ارتباط با MediaPipe Pose Landmarker در حالت‌های IMAGE و LIVE_STREAM |
+| **Posture Metrics** | محاسبه شاخص‌های وضعیت بدن و ارزیابی کلی                             |
+| **Serializer**      | تبدیل نتیجه داخلی به پاسخ مناسب برای API و WebSocket                |
+| **Utilities**       | پردازش تصویر و رسم نقاط و Skeleton                                  |
 
-
-## Project Structure
+## ساختار پروژه
 
 ```text
 Finale 2/
@@ -104,9 +104,9 @@ Finale 2/
 │   │   ├── api/
 │   │   │   ├── routes/
 │   │   │   │   ├── analyze.py
-│   │   │   │   ├── health.py
-│   │   │   │   └── websocket.py
-│   │   │   │
+│   │   │   ├── health.py
+│   │   │   └── websocket.py
+│   │   │
 │   │   │   └── serializers/
 │   │   │       └── posture.py
 │   │   │
@@ -155,35 +155,35 @@ Finale 2/
         └── app.js
 ```
 
-## Technologies
+## فناوری‌های استفاده‌شده
 
 ### Backend
 
-* Python 3.11+
-* FastAPI
-* Uvicorn
-* MediaPipe
-* OpenCV
-* NumPy
-* Pillow
+- Python 3.11+
+- FastAPI
+- Uvicorn
+- MediaPipe
+- OpenCV
+- NumPy
+- Pillow
 
 ### Frontend
 
-* HTML
-* CSS
-* JavaScript
-* WebSocket API
-* MediaDevices API
+- HTML
+- CSS
+- JavaScript
+- WebSocket API
+- MediaDevices API
 
 ### Testing
 
-* Pytest
-* Pytest-Cov
-* WebSockets
+- Pytest
+- Pytest-Cov
+- WebSockets
 
-## Requirements
+## پیش‌نیازها
 
-### Runtime
+وابستگی‌های Runtime:
 
 ```text
 fastapi>=0.110
@@ -195,7 +195,7 @@ pillow>=10.0
 numpy>=1.26,<2.0
 ```
 
-### Development and Testing
+وابستگی‌های توسعه و تست:
 
 ```text
 -r requirements.txt
@@ -205,38 +205,38 @@ pytest-cov>=7.0
 websockets>=15.0
 ```
 
-## Installation
+## نصب
 
-Clone the repository:
+Repository را دریافت کنید:
 
 ```bash
 git clone https://github.com/8Whoknow3/posture-checker.git
 cd posture-checker
 ```
 
-Create and activate a Python 3.11 environment:
+ساخت محیط Python:
 
 ```powershell
 conda create -n posture-web python=3.11
 conda activate posture-web
 ```
 
-Install dependencies:
+نصب وابستگی‌ها:
 
 ```powershell
 cd backend
 python -m pip install -r requirements-dev.txt
 ```
 
-## Running the Application
+## اجرای پروژه
 
-From the project root:
+از ریشه پروژه:
 
 ```powershell
 python run.py
 ```
 
-The application starts:
+آدرس‌ها:
 
 ```text
 Frontend: http://127.0.0.1:5500
@@ -252,7 +252,7 @@ Swagger:  http://127.0.0.1:8000/docs
 GET /api/health
 ```
 
-Response:
+پاسخ:
 
 ```json
 {
@@ -260,23 +260,23 @@ Response:
 }
 ```
 
-### Image Analysis
+### تحلیل تصویر
 
 ```http
 POST /api/analyze
 ```
 
-The endpoint accepts an image using `multipart/form-data`.
+پارامتر تصویر با `multipart/form-data` ارسال می‌شود.
 
-### Live WebSocket
+### WebSocket
 
 ```text
 /ws/posture
 ```
 
-The client sends JPEG frames as binary WebSocket messages.
+در این مسیر، فریم‌های JPEG به صورت Binary ارسال می‌شوند.
 
-Successful response:
+پاسخ موفق:
 
 ```json
 {
@@ -289,7 +289,7 @@ Successful response:
 }
 ```
 
-Error response:
+پاسخ خطا:
 
 ```json
 {
@@ -298,22 +298,45 @@ Error response:
 }
 ```
 
-## Testing
+## تحلیل وضعیت بدن
 
-Run the complete test suite:
+سیستم چند شاخص مرتبط با وضعیت بدن را محاسبه کرده و آنها را در سطوح مختلف نمایش می‌دهد.
+
+هر Metric شامل اطلاعاتی مانند:
+
+```text
+key
+title
+tier
+value
+unit
+status
+status_label
+reference
+tip
+convention_note
+```
+
+همچنین یک ارزیابی کلی برای وضعیت تولید می‌شود.
+
+این ارزیابی برای اهداف تحلیلی و آموزشی این پروژه است و جایگزین ارزیابی پزشکی یا فیزیوتراپی نیست.
+
+## تست‌ها
+
+اجرای کل تست‌ها:
 
 ```powershell
 cd backend
 pytest -q
 ```
 
-Run WebSocket tests:
+تست WebSocket:
 
 ```powershell
 pytest tests/test_websocket.py -v
 ```
 
-Run the WebSocket performance test:
+تست Performance:
 
 ```powershell
 pytest tests/test_websocket_performance.py -s -v
@@ -321,7 +344,7 @@ pytest tests/test_websocket_performance.py -s -v
 
 ## Performance
 
-A development test using 20 frames produced the following baseline:
+در یک تست توسعه با ۲۰ فریم، نتیجه زیر به دست آمده است:
 
 ```text
 Frames requested : 20
@@ -330,8 +353,11 @@ Average latency  : 52.8 ms
 Approx. FPS      : 18.95
 ```
 
-Performance may vary depending on hardware, camera resolution, and runtime conditions.
+نتایج Performance به سخت‌افزار، دوربین و شرایط اجرای سیستم وابسته هستند.
 
 ## License
 
 This project was developed for educational and university purposes.
+
+````
+
