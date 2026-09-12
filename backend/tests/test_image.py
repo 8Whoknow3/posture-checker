@@ -4,18 +4,12 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from app.core.exceptions import (
-    InvalidImageError,
-)
+from app.core.exceptions import InvalidImageError
 from app.utils.image import (
     decode_image,
     encode_jpeg,
 )
 
-
-# ============================================================
-# DECODE
-# ============================================================
 
 def test_decode_image():
     """Test decoding an image into an OpenCV array."""
@@ -49,10 +43,6 @@ def test_decode_image():
     )
 
 
-# ============================================================
-# ENCODE
-# ============================================================
-
 def test_encode_jpeg():
     """Test JPEG encoding."""
 
@@ -74,10 +64,6 @@ def test_encode_jpeg():
         b"\xff\xd8"
     )
 
-
-# ============================================================
-# INVALID IMAGE
-# ============================================================
 
 def test_decode_invalid_image():
     """Test invalid image handling."""

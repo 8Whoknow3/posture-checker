@@ -9,7 +9,6 @@ from app.core.exceptions import (
     WorldLandmarksUnavailableError,
 )
 from app.services.posture_service import PostureService
-from app.vision.pose_detector import PoseDetector
 
 
 IMAGE_PATH = (
@@ -19,60 +18,53 @@ IMAGE_PATH = (
 )
 
 
-# ============================================================
-# ANALYSIS
-# ============================================================
-
-def test_posture_service_analyzes_frame():
+def test_posture_service_analyzes_frame(detector):
     """Test posture analysis from an image frame."""
 
     assert IMAGE_PATH.exists()
 
-    frame = cv2.imread(str(IMAGE_PATH))
+    frame = cv2.imread(
+        str(IMAGE_PATH)
+    )
 
     assert frame is not None
 
-    detector = PoseDetector()
-    service = PostureService(detector)
+    service = PostureService(
+        detector
+    )
 
-    try:
-        result = service.analyze_frame(frame)
+    result = service.analyze_frame(
+        frame
+    )
 
-        assert "analysis" in result
-        assert "annotated_image" in result
+    assert "analysis" in result
+    assert "annotated_image" in result
 
-        analysis = result["analysis"]
+    analysis = result["analysis"]
 
-        assert "metrics" in analysis
-        assert "overall" in analysis
-        assert "points" in analysis
-        assert "view_label" in analysis
+    assert "metrics" in analysis
+    assert "overall" in analysis
+    assert "points" in analysis
+    assert "view_label" in analysis
 
-        assert len(
-            analysis["metrics"]
-        ) == 5
+    assert len(
+        analysis["metrics"]
+    ) == 5
 
-        annotated_image = (
-            result["annotated_image"]
-        )
+    annotated_image = (
+        result["annotated_image"]
+    )
 
-        assert isinstance(
-            annotated_image,
-            np.ndarray,
-        )
+    assert isinstance(
+        annotated_image,
+        np.ndarray,
+    )
 
-        assert (
-            annotated_image.shape
-            == frame.shape
-        )
+    assert (
+        annotated_image.shape
+        == frame.shape
+    )
 
-    finally:
-        detector.close()
-
-
-# ============================================================
-# NO POSE
-# ============================================================
 
 def test_posture_service_raises_when_pose_is_missing():
     """Test the missing-pose error."""
@@ -101,10 +93,6 @@ def test_posture_service_raises_when_pose_is_missing():
     ):
         service.analyze_frame(frame)
 
-
-# ============================================================
-# MISSING WORLD LANDMARKS
-# ============================================================
 
 def test_posture_service_raises_when_world_landmarks_are_missing():
     """Test the missing 3D landmark error."""
@@ -146,10 +134,6 @@ def test_posture_service_raises_when_world_landmarks_are_missing():
         service.analyze_frame(frame)
 
 
-# ============================================================
-# LANDMARK ANALYSIS
-# ============================================================
-
 def test_posture_service_analyzes_landmarks():
     """Test analysis using already detected landmarks."""
 
@@ -174,27 +158,24 @@ def test_posture_service_analyzes_landmarks():
         dtype=np.uint8,
     )
 
-    detector = PoseDetector()
-    service = PostureService(detector)
+    service = PostureService(
+        detector=None
+    )
 
-    try:
-        result = service.analyze_landmarks(
-            frame,
-            landmarks_2d,
-            landmarks_3d,
-        )
+    result = service.analyze_landmarks(
+        frame,
+        landmarks_2d,
+        landmarks_3d,
+    )
 
-        assert "analysis" in result
-        assert "annotated_image" in result
+    assert "analysis" in result
+    assert "annotated_image" in result
 
-        assert len(
-            result["analysis"]["metrics"]
-        ) == 5
+    assert len(
+        result["analysis"]["metrics"]
+    ) == 5
 
-        assert isinstance(
-            result["annotated_image"],
-            np.ndarray,
-        )
-
-    finally:
-        detector.close()
+    assert isinstance(
+        result["annotated_image"],
+        np.ndarray,
+    )

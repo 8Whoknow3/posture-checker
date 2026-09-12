@@ -25,7 +25,7 @@ SERVER_START_TIMEOUT = 15.0
 
 
 def is_server_ready() -> bool:
-    """Check whether the test server is accepting TCP connections."""
+    """Check whether the test server accepts TCP connections."""
 
     with socket.socket(
         socket.AF_INET,
@@ -45,7 +45,7 @@ def wait_for_server(
     process: subprocess.Popen,
     timeout: float = SERVER_START_TIMEOUT,
 ) -> None:
-    """Wait until Uvicorn is ready to accept connections."""
+    """Wait until Uvicorn is ready."""
 
     deadline = (
         time.monotonic()
@@ -71,7 +71,7 @@ def wait_for_server(
 
 
 def start_server() -> subprocess.Popen:
-    """Start a temporary Uvicorn server for the performance test."""
+    """Start a temporary Uvicorn server."""
 
     backend_dir = (
         Path(__file__).resolve().parents[1]
@@ -148,7 +148,10 @@ async def run_performance_test() -> None:
 
                 message_type = data.get("type")
 
-                if message_type == "posture_result":
+                if (
+                    message_type
+                    == "posture_result"
+                ):
                     elapsed_ms = (
                         time.perf_counter()
                         - start
@@ -218,7 +221,7 @@ async def run_performance_test() -> None:
 
 
 def test_websocket_performance():
-    """Run the WebSocket performance test with a temporary server."""
+    """Run the performance test with a temporary server."""
 
     server = start_server()
 

@@ -13,45 +13,40 @@ IMAGE_PATH = (
 )
 
 
-# ============================================================
-# IMAGE MODE
-# ============================================================
-
-def test_pose_detector_detects_pose():
+def test_pose_detector_detects_pose(detector):
     """Test pose detection in IMAGE mode."""
 
     assert IMAGE_PATH.exists()
 
-    frame = cv2.imread(str(IMAGE_PATH))
+    frame = cv2.imread(
+        str(IMAGE_PATH)
+    )
 
     assert frame is not None
 
-    detector = PoseDetector()
+    result = detector.detect(frame)
 
-    try:
-        result = detector.detect(frame)
+    assert result is not None
+    assert result.pose_landmarks
+    assert result.pose_world_landmarks
 
-        assert result is not None
-        assert result.pose_landmarks
-        assert result.pose_world_landmarks
+    assert len(
+        result.pose_landmarks[0]
+    ) == 33
 
-        assert len(result.pose_landmarks[0]) == 33
-        assert len(result.pose_world_landmarks[0]) == 33
-
-    finally:
-        detector.close()
+    assert len(
+        result.pose_world_landmarks[0]
+    ) == 33
 
 
-# ============================================================
-# LIVE STREAM MODE
-# ============================================================
-
-def test_pose_detector_live_stream():
+def test_pose_detector_live_stream(detector):
     """Test asynchronous LIVE_STREAM detection."""
 
     assert IMAGE_PATH.exists()
 
-    frame = cv2.imread(str(IMAGE_PATH))
+    frame = cv2.imread(
+        str(IMAGE_PATH)
+    )
 
     assert frame is not None
 
@@ -69,8 +64,6 @@ def test_pose_detector_live_stream():
                 timestamp_ms,
             )
         )
-
-    detector = PoseDetector()
 
     live_detector = detector.create_live_detector(
         callback
@@ -96,7 +89,9 @@ def test_pose_detector_live_stream():
 
         assert received
 
-        result, image, timestamp_ms = received[-1]
+        result, image, timestamp_ms = (
+            received[-1]
+        )
 
         assert result is not None
         assert image is not None
@@ -116,19 +111,18 @@ def test_pose_detector_live_stream():
 
     finally:
         live_detector.close()
-        detector.close()
 
 
-# ============================================================
-# LIVE STREAM CALLBACK
-# ============================================================
-
-def test_live_stream_callback_is_called():
+def test_live_stream_callback_is_called(
+    detector,
+):
     """Test that LIVE_STREAM invokes the callback."""
 
     assert IMAGE_PATH.exists()
 
-    frame = cv2.imread(str(IMAGE_PATH))
+    frame = cv2.imread(
+        str(IMAGE_PATH)
+    )
 
     assert frame is not None
 
@@ -146,8 +140,6 @@ def test_live_stream_callback_is_called():
                 timestamp_ms,
             )
         )
-
-    detector = PoseDetector()
 
     live_detector = detector.create_live_detector(
         callback
@@ -171,7 +163,7 @@ def test_live_stream_callback_is_called():
         ):
             time.sleep(0.05)
 
-        assert len(received) >= 1
+        assert received
 
         result, image, timestamp_ms = (
             received[0]
@@ -183,23 +175,12 @@ def test_live_stream_callback_is_called():
 
     finally:
         live_detector.close()
-        detector.close()
 
 
-# ============================================================
-# MODEL PATH
-# ============================================================
-
-def test_pose_model_exists():
+def test_pose_model_exists(detector):
     """Test that the MediaPipe model exists."""
 
-    detector = PoseDetector()
+    model_path = detector._get_model_path()
 
-    try:
-        model_path = detector._get_model_path()
-
-        assert model_path.exists()
-        assert model_path.is_file()
-
-    finally:
-        detector.close()
+    assert model_path.exists()
+    assert model_path.is_file()
