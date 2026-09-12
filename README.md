@@ -4,22 +4,22 @@ A web-based computer vision application for analyzing sitting posture using a we
 
 The application detects human pose landmarks with **MediaPipe Pose Landmarker**, calculates posture-related metrics, and provides an overall posture assessment.
 
-[🇬🇧 **English**] | 🇮🇷 **فارسی**(README_FA.md)
+**🇬🇧 English** | [🇮🇷 فارسی](README_FA.md)
 
 ## Features
 
-* Image upload and analysis
-* Webcam capture and analysis
-* Real-time posture analysis
-* WebSocket-based live processing
-* MediaPipe Pose Landmarker
-* Posture metrics and overall assessment
-* Annotated pose visualization
-* REST API
-* Health check endpoint
-* Error handling
-* Unit and integration tests
-* WebSocket performance testing
+- Image upload and analysis
+- Webcam capture and analysis
+- Real-time posture analysis
+- WebSocket-based live processing
+- MediaPipe Pose Landmarker
+- Posture metrics and overall assessment
+- Annotated pose visualization
+- REST API
+- Health check endpoint
+- Error handling
+- Unit and integration tests
+- WebSocket performance testing
 
 ## Architecture
 
@@ -91,7 +91,6 @@ The application follows a lightweight layered architecture that separates the we
 | **Serializer**      | Converts internal analysis results into API/WebSocket responses                       |
 | **Utilities**       | Image encoding/decoding and pose visualization                                        |
 
-
 ## Project Structure
 
 ```text
@@ -159,27 +158,27 @@ Finale 2/
 
 ### Backend
 
-* Python 3.11+
-* FastAPI
-* Uvicorn
-* MediaPipe
-* OpenCV
-* NumPy
-* Pillow
+- Python 3.11+
+- FastAPI
+- Uvicorn
+- MediaPipe
+- OpenCV
+- NumPy
+- Pillow
 
 ### Frontend
 
-* HTML
-* CSS
-* JavaScript
-* WebSocket API
-* MediaDevices API
+- HTML
+- CSS
+- JavaScript
+- WebSocket API
+- MediaDevices API
 
 ### Testing
 
-* Pytest
-* Pytest-Cov
-* WebSockets
+- Pytest
+- Pytest-Cov
+- WebSockets
 
 ## Requirements
 
