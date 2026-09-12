@@ -4,7 +4,7 @@ A web-based computer vision application for analyzing sitting posture using a we
 
 The application detects human pose landmarks with **MediaPipe Pose Landmarker**, calculates posture-related metrics, and provides an overall posture assessment.
 
-[🇬🇧 **English**](README.md) | 🇮🇷 **فارسی**
+[🇬🇧 **English**] | 🇮🇷 **فارسی**(README_FA.md)
 
 ## Features
 
