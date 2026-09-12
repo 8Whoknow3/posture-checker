@@ -1,8 +1,5 @@
 import cv2
-import mediapipe as mp
-
-
-mp_pose = mp.solutions.pose
+from mediapipe.tasks.python.vision import PoseLandmarksConnections
 
 
 STATUS_COLORS = {
@@ -12,6 +9,7 @@ STATUS_COLORS = {
 }
 
 NEUTRAL_COLOR = (210, 170, 60)
+HIGHLIGHT_COLOR = (255, 255, 255)
 
 
 def draw_pose_overlay(
@@ -31,9 +29,9 @@ def draw_pose_overlay(
         NEUTRAL_COLOR,
     )
 
-    for start, end in mp_pose.POSE_CONNECTIONS:
-        point_a = landmarks[start]
-        point_b = landmarks[end]
+    for connection in PoseLandmarksConnections.POSE_LANDMARKS:
+        point_a = landmarks[connection.start]
+        point_b = landmarks[connection.end]
 
         point_a_px = (
             int(point_a.x * width),
@@ -54,10 +52,10 @@ def draw_pose_overlay(
             cv2.LINE_AA,
         )
 
-    for point in landmarks:
+    for landmark in landmarks:
         point_px = (
-            int(point.x * width),
-            int(point.y * height),
+            int(landmark.x * width),
+            int(landmark.y * height),
         )
 
         cv2.circle(
@@ -73,7 +71,7 @@ def draw_pose_overlay(
             overlay,
             point_px,
             5,
-            (255, 255, 255),
+            HIGHLIGHT_COLOR,
             1,
             cv2.LINE_AA,
         )
@@ -86,7 +84,7 @@ def draw_pose_overlay(
                 int(point[1]),
             ),
             9,
-            (255, 255, 255),
+            HIGHLIGHT_COLOR,
             2,
             cv2.LINE_AA,
         )

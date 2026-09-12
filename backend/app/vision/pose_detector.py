@@ -34,8 +34,8 @@ class PoseDetector:
             )
 
         self._image_detector = self._create_detector(
-            model_path,
-            RunningMode.IMAGE,
+            model_path=model_path,
+            running_mode=RunningMode.IMAGE,
         )
 
     @staticmethod
@@ -50,8 +50,8 @@ class PoseDetector:
             / "pose_landmarker_full.task"
         )
 
+    @staticmethod
     def _create_detector(
-        self,
         model_path: Path,
         running_mode: RunningMode,
         callback: Optional[PoseCallback] = None,
@@ -87,30 +87,19 @@ class PoseDetector:
             options
         )
 
-    # ========================================================
-    # IMAGE MODE
-    # ========================================================
+    def detect(
+        self,
+        frame,
+    ) -> PoseLandmarkerResult:
+        """Detect pose landmarks from an OpenCV BGR frame."""
 
-    def detect(self, frame):
-        """Detect pose landmarks from an OpenCV BGR image."""
-
-        rgb_frame = cv2.cvtColor(
-            frame,
-            cv2.COLOR_BGR2RGB,
-        )
-
-        mp_image = mp.Image(
-            image_format=mp.ImageFormat.SRGB,
-            data=rgb_frame,
+        mp_image = self.frame_to_mp_image(
+            frame
         )
 
         return self._image_detector.detect(
             mp_image
         )
-
-    # ========================================================
-    # LIVE STREAM
-    # ========================================================
 
     def create_live_detector(
         self,
@@ -125,13 +114,15 @@ class PoseDetector:
         model_path = self._get_model_path()
 
         return self._create_detector(
-            model_path,
-            RunningMode.LIVE_STREAM,
-            callback,
+            model_path=model_path,
+            running_mode=RunningMode.LIVE_STREAM,
+            callback=callback,
         )
 
     @staticmethod
-    def frame_to_mp_image(frame) -> mp.Image:
+    def frame_to_mp_image(
+        frame,
+    ) -> mp.Image:
         """Convert an OpenCV BGR frame to a MediaPipe image."""
 
         rgb_frame = cv2.cvtColor(
@@ -143,10 +134,6 @@ class PoseDetector:
             image_format=mp.ImageFormat.SRGB,
             data=rgb_frame,
         )
-
-    # ========================================================
-    # RESOURCE MANAGEMENT
-    # ========================================================
 
     def close(self) -> None:
         """Close the shared IMAGE detector."""

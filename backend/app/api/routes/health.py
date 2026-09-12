@@ -8,8 +8,8 @@ router = APIRouter(
 
 
 @router.get("/health")
-def health_check():
-    """Check whether the backend is running."""
+def health_check() -> dict[str, str]:
+    """Return the backend health status."""
 
     return {
         "status": "ok",

@@ -11,7 +11,7 @@ from app.core.exceptions import (
 
 
 def decode_image(contents: bytes) -> np.ndarray:
-    """Decode uploaded image bytes into a BGR OpenCV image."""
+    """Decode image bytes into a BGR OpenCV image."""
 
     try:
         image = Image.open(

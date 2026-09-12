@@ -1,82 +1,23 @@
 from __future__ import annotations
 
 import asyncio
-import base64
 import time
 
 import cv2
+import mediapipe as mp
 import numpy as np
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from mediapipe.tasks.python.vision import PoseLandmarkerResult
 
+from app.api.serializers.posture import (
+    serialize_posture_result,
+)
 from app.services.posture_service import PostureService
 
 
 router = APIRouter(
     tags=["WebSocket"],
 )
-
-
-def build_response(
-    service: PostureService,
-    frame: np.ndarray,
-    landmarks_2d,
-    landmarks_3d,
-) -> dict:
-    """Build the WebSocket response from detected pose landmarks."""
-
-    result = service.analyze_landmarks(
-        frame,
-        landmarks_2d,
-        landmarks_3d,
-    )
-
-    annotated_image = result["annotated_image"]
-
-    success, buffer = cv2.imencode(
-        ".jpg",
-        annotated_image,
-        [cv2.IMWRITE_JPEG_QUALITY, 80],
-    )
-
-    if not success:
-        raise ValueError(
-            "Failed to encode output image."
-        )
-
-    image_base64 = base64.b64encode(
-        buffer.tobytes()
-    ).decode("utf-8")
-
-    analysis = result["analysis"]
-
-    metrics = [
-        {
-            "key": metric.key,
-            "title": metric.title,
-            "tier": metric.tier,
-            "value": round(
-                metric.value,
-                1,
-            ),
-            "unit": metric.unit,
-            "status": metric.status,
-            "status_label": metric.status_label,
-            "reference": metric.reference,
-            "tip": metric.tip,
-            "convention_note": metric.convention_note,
-        }
-        for metric in analysis["metrics"]
-    ]
-
-    return {
-        "type": "posture_result",
-        "annotated_image": (
-            f"data:image/jpeg;base64,{image_base64}"
-        ),
-        "view_label": analysis["view_label"],
-        "metrics": metrics,
-        "overall": analysis["overall"],
-    }
 
 
 @router.websocket("/ws/posture")
@@ -94,11 +35,18 @@ async def posture_websocket(
     shared_detector = service.detector
 
     loop = asyncio.get_running_loop()
-    result_queue: asyncio.Queue = asyncio.Queue()
+
+    result_queue: asyncio.Queue[
+        tuple[
+            PoseLandmarkerResult,
+            np.ndarray,
+            int,
+        ] | Exception
+    ] = asyncio.Queue()
 
     def live_callback(
-        result,
-        image,
+        result: PoseLandmarkerResult,
+        image: mp.Image,
         timestamp_ms: int,
     ) -> None:
         """Receive a result from MediaPipe LIVE_STREAM."""
@@ -145,6 +93,7 @@ async def posture_websocket(
             if not frame_bytes:
                 continue
 
+            # Decode the JPEG frame received from the browser.
             frame_array = np.frombuffer(
                 frame_bytes,
                 dtype=np.uint8,
@@ -165,6 +114,8 @@ async def posture_websocket(
 
                 continue
 
+            # MediaPipe LIVE_STREAM requires
+            # strictly increasing timestamps.
             timestamp_ms = max(
                 time.monotonic_ns() // 1_000_000,
                 last_timestamp_ms + 1,
@@ -233,13 +184,25 @@ async def posture_websocket(
                 continue
 
             try:
-                response = build_response(
-                    service,
-                    processed_frame,
-                    result.pose_landmarks[0],
-                    result.pose_world_landmarks[0],
+                analysis_result = (
+                    service.analyze_landmarks(
+                        processed_frame,
+                        result.pose_landmarks[0],
+                        result.pose_world_landmarks[0],
+                    )
                 )
 
+                response = serialize_posture_result(
+                    analysis=analysis_result["analysis"],
+                    annotated_image=(
+                        analysis_result[
+                            "annotated_image"
+                        ]
+                    ),
+                    quality=80,
+                )
+
+                response["type"] = "posture_result"
                 response["timestamp_ms"] = (
                     result_timestamp
                 )
