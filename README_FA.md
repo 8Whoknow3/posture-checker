@@ -360,5 +360,3 @@ Approx. FPS      : 18.95
 This project was developed for educational and university purposes.
 
 ```
-
-```
