@@ -11,15 +11,23 @@ const WEBSOCKET_URL = "ws://127.0.0.1:8000/ws/posture";
 // ------------------------------------------------------------------
 
 const dropzone = document.getElementById("dropzone");
-const dropzoneContent = document.getElementById("dropzoneContent");
-const fileInput = document.getElementById("fileInput");
-const previewImg = document.getElementById("previewImg");
-const analyzeBtn = document.getElementById("analyzeBtn");
+const dropzoneContent =
+  document.getElementById("dropzoneContent");
+const fileInput =
+  document.getElementById("fileInput");
+const previewImg =
+  document.getElementById("previewImg");
+const analyzeBtn =
+  document.getElementById("analyzeBtn");
 
-const tabUpload = document.getElementById("tabUpload");
-const tabWebcam = document.getElementById("tabWebcam");
-const modeUpload = document.getElementById("modeUpload");
-const modeWebcam = document.getElementById("modeWebcam");
+const tabUpload =
+  document.getElementById("tabUpload");
+const tabWebcam =
+  document.getElementById("tabWebcam");
+const modeUpload =
+  document.getElementById("modeUpload");
+const modeWebcam =
+  document.getElementById("modeWebcam");
 
 const webcamPlaceholder =
   document.getElementById("webcamPlaceholder");
@@ -53,40 +61,32 @@ const liveIndicator =
 
 const emptyState =
   document.getElementById("emptyState");
-
 const loadingState =
   document.getElementById("loadingState");
-
 const errorState =
   document.getElementById("errorState");
-
 const resultsContent =
   document.getElementById("resultsContent");
 
 const annotatedImg =
   document.getElementById("annotatedImg");
-
 const viewBadge =
   document.getElementById("viewBadge");
 
 const overallLabel =
   document.getElementById("overallLabel");
-
 const overallScore =
   document.getElementById("overallScore");
-
 const overallMeterFill =
   document.getElementById("overallMeterFill");
 
 const tier1Grid =
   document.getElementById("tier1Grid");
-
 const tier2Grid =
   document.getElementById("tier2Grid");
 
 const correctionsCard =
   document.getElementById("correctionsCard");
-
 const correctionsList =
   document.getElementById("correctionsList");
 
@@ -104,7 +104,6 @@ let liveInFlight = false;
 let liveTimeoutId = null;
 
 let postureSocket = null;
-let liveTimestamp = 0;
 
 
 // ------------------------------------------------------------------
@@ -283,7 +282,9 @@ function stopWebcamStream() {
   if (webcamStream) {
     webcamStream
       .getTracks()
-      .forEach((track) => track.stop());
+      .forEach(
+        (track) => track.stop()
+      );
 
     webcamStream = null;
   }
@@ -437,6 +438,7 @@ const LIVE_MAX_DIM = 640;
 const LIVE_JPEG_QUALITY = 0.7;
 const LIVE_RETRY_DELAY_MS = 100;
 
+
 function setLiveModeUI(active) {
   liveIndicator.hidden = !active;
 
@@ -453,6 +455,7 @@ function setLiveModeUI(active) {
   analyzeBtn.hidden = active;
 }
 
+
 function startLiveMode() {
   if (
     liveMode ||
@@ -468,7 +471,6 @@ function startLiveMode() {
   }
 
   liveMode = true;
-  liveTimestamp = 0;
   liveInFlight = false;
 
   clearWebcamError();
@@ -478,12 +480,16 @@ function startLiveMode() {
   connectPostureWebSocket();
 }
 
+
 function stopLiveMode() {
   liveMode = false;
   liveInFlight = false;
 
   if (liveTimeoutId !== null) {
-    clearTimeout(liveTimeoutId);
+    clearTimeout(
+      liveTimeoutId
+    );
+
     liveTimeoutId = null;
   }
 
@@ -491,6 +497,7 @@ function stopLiveMode() {
 
   setLiveModeUI(false);
 }
+
 
 function connectPostureWebSocket() {
   if (!liveMode) {
@@ -543,6 +550,7 @@ function connectPostureWebSocket() {
   }
 }
 
+
 function handleWebSocketOpen() {
   if (!liveMode) {
     return;
@@ -552,6 +560,7 @@ function handleWebSocketOpen() {
 
   scheduleLiveFrame(true);
 }
+
 
 function handleWebSocketMessage(event) {
   if (!liveMode) {
@@ -563,6 +572,7 @@ function handleWebSocketMessage(event) {
   try {
     data =
       JSON.parse(event.data);
+
   } catch (error) {
     liveInFlight = false;
 
@@ -598,22 +608,16 @@ function handleWebSocketMessage(event) {
   scheduleLiveFrame(false);
 }
 
+
 function handleLiveError(message) {
-  /*
-   * اگر هنوز نتیجه‌ای نداریم، خطا را در پنل نتایج
-   * نیز نمایش می‌دهیم.
-   */
   if (resultsContent.hidden) {
     showError(message);
     return;
   }
 
-  /*
-   * اگر نتیجه قبلی روی صفحه وجود دارد، خطای یک
-   * فریم نباید کل نتیجه را پاک کند.
-   */
   showWebcamError(message);
 }
+
 
 function handleWebSocketError() {
   if (!liveMode) {
@@ -624,6 +628,7 @@ function handleWebSocketError() {
     "ارتباط بلادرنگ با سرور برقرار نشد."
   );
 }
+
 
 function handleWebSocketClose() {
   postureSocket = null;
@@ -640,13 +645,16 @@ function handleWebSocketClose() {
   scheduleWebSocketReconnect();
 }
 
+
 function scheduleWebSocketReconnect() {
   if (!liveMode) {
     return;
   }
 
   if (liveTimeoutId !== null) {
-    clearTimeout(liveTimeoutId);
+    clearTimeout(
+      liveTimeoutId
+    );
   }
 
   liveTimeoutId = setTimeout(
@@ -662,6 +670,7 @@ function scheduleWebSocketReconnect() {
     LIVE_RETRY_DELAY_MS
   );
 }
+
 
 function closePostureWebSocket() {
   if (!postureSocket) {
@@ -685,13 +694,19 @@ function closePostureWebSocket() {
   postureSocket = null;
 }
 
-function scheduleLiveFrame(immediate) {
+
+function scheduleLiveFrame(
+  immediate
+) {
   if (!liveMode) {
     return;
   }
 
   if (liveTimeoutId !== null) {
-    clearTimeout(liveTimeoutId);
+    clearTimeout(
+      liveTimeoutId
+    );
+
     liveTimeoutId = null;
   }
 
@@ -700,6 +715,7 @@ function scheduleLiveFrame(immediate) {
     immediate ? 0 : 50
   );
 }
+
 
 function sendLiveFrame() {
   liveTimeoutId = null;
@@ -792,8 +808,6 @@ function sendLiveFrame() {
         return;
       }
 
-      liveTimestamp += 1;
-
       postureSocket.send(
         blob
       );
@@ -802,6 +816,7 @@ function sendLiveFrame() {
     LIVE_JPEG_QUALITY
   );
 }
+
 
 liveToggleBtn.addEventListener(
   "click",
@@ -862,433 +877,3 @@ analyzeBtn.addEventListener(
       setState("results");
 
     } catch (error) {
-      showError(
-        "ارتباط با سرور برقرار نشد. مطمئن شوید سرور FastAPI در حال اجراست."
-      );
-    }
-  }
-);
-
-
-// ------------------------------------------------------------------
-// UI State
-// ------------------------------------------------------------------
-
-function setState(state) {
-  emptyState.hidden =
-    state !== "empty";
-
-  loadingState.hidden =
-    state !== "loading";
-
-  errorState.hidden =
-    state !== "error";
-
-  resultsContent.hidden =
-    state !== "results";
-}
-
-function showError(message) {
-  errorState.textContent =
-    message;
-
-  setState("error");
-}
-
-
-// ------------------------------------------------------------------
-// Result Rendering
-// ------------------------------------------------------------------
-
-const STATUS_COLOR_VAR = {
-  good: "--good",
-  caution: "--caution",
-  poor: "--poor",
-};
-
-const OVERALL_LEVEL_TEXT = {
-  low: "ریسک پایین — وضعیت کلی مطلوب است",
-  medium: "ریسک متوسط — نیازمند توجه در برخی موارد",
-  high: "ریسک بالا — اصلاح وضعیت توصیه می‌شود",
-};
-
-const OVERALL_LEVEL_COLOR = {
-  low: "var(--good)",
-  medium: "var(--caution)",
-  high: "var(--poor)",
-};
-
-
-// ------------------------------------------------------------------
-// Gauge Configuration
-// ------------------------------------------------------------------
-
-const GAUGE_RANGES = {
-  cva: {
-    min: 30,
-    max: 90,
-    higherIsBetter: true,
-  },
-
-  trunk: {
-    min: 0,
-    max: 90,
-    higherIsBetter: false,
-  },
-
-  spine_align: {
-    min: 110,
-    max: 180,
-    higherIsBetter: true,
-  },
-
-  head_tilt: {
-    min: 0,
-    max: 30,
-    higherIsBetter: false,
-  },
-
-  trunk_lateral: {
-    min: 0,
-    max: 30,
-    higherIsBetter: false,
-  },
-};
-
-
-// ------------------------------------------------------------------
-// Render Results
-// ------------------------------------------------------------------
-
-function renderResults(data) {
-  annotatedImg.src =
-    data.annotated_image;
-
-  viewBadge.textContent =
-    `زاویه دوربین: ${data.view_label}`;
-
-  const overall =
-    data.overall;
-
-  overallLabel.textContent =
-    OVERALL_LEVEL_TEXT[
-      overall.level
-    ] ||
-    overall.level_label;
-
-  overallScore.textContent =
-    `${overall.score} / ${overall.max_score}`;
-
-  const percentage =
-    Math.min(
-      100,
-      Math.round(
-        (
-          overall.score /
-          overall.max_score
-        ) * 100
-      )
-    );
-
-  overallMeterFill.style.width =
-    percentage + "%";
-
-  overallMeterFill.style.background =
-    OVERALL_LEVEL_COLOR[
-      overall.level
-    ] ||
-    "var(--caution)";
-
-  const tier1 =
-    data.metrics.filter(
-      (metric) =>
-        metric.tier === 1
-    );
-
-  const tier2 =
-    data.metrics.filter(
-      (metric) =>
-        metric.tier === 2
-    );
-
-  tier1Grid.innerHTML =
-    tier1
-      .map(renderMetricCard)
-      .join("");
-
-  tier2Grid.innerHTML =
-    tier2
-      .map(renderMetricCard)
-      .join("");
-
-  const needsCorrection =
-    data.metrics.filter(
-      (metric) =>
-        metric.status !== "good"
-    );
-
-  if (
-    needsCorrection.length > 0
-  ) {
-    correctionsList.innerHTML =
-      needsCorrection
-        .map(
-          (metric) =>
-            `<li><strong>${escapeHtml(
-              metric.title
-            )}:</strong> ${escapeHtml(
-              metric.tip
-            )}</li>`
-        )
-        .join("");
-
-    correctionsCard.hidden =
-      false;
-
-  } else {
-    correctionsCard.hidden =
-      true;
-  }
-}
-
-
-// ------------------------------------------------------------------
-// Metric Cards
-// ------------------------------------------------------------------
-
-function renderMetricCard(metric) {
-  const gauge =
-    buildGaugeSvg(metric);
-
-  const noteHtml =
-    metric.convention_note
-      ? `<div class="metric-note">${escapeHtml(
-          metric.convention_note
-        )}</div>`
-      : "";
-
-  return `
-    <div class="metric-card status-${metric.status}">
-      <div class="gauge-wrap">
-        ${gauge}
-      </div>
-
-      <div class="metric-body">
-        <p class="metric-title">
-          ${escapeHtml(metric.title)}
-        </p>
-
-        <div class="metric-value-row">
-          <span class="metric-value">
-            ${metric.value}
-          </span>
-
-          <span class="metric-unit">
-            ${escapeHtml(metric.unit)}
-          </span>
-
-          <span class="metric-status-pill">
-            ${escapeHtml(metric.status_label)}
-          </span>
-        </div>
-
-        <div class="metric-ref">
-          ${escapeHtml(metric.reference)}
-        </div>
-
-        ${noteHtml}
-      </div>
-    </div>
-  `;
-}
-
-
-// ------------------------------------------------------------------
-// Gauge
-// ------------------------------------------------------------------
-
-function buildGaugeSvg(metric) {
-  const range =
-    GAUGE_RANGES[
-      metric.key
-    ] || {
-      min: 0,
-      max: 100,
-      higherIsBetter: true,
-    };
-
-  const fraction =
-    clamp(
-      (
-        metric.value -
-        range.min
-      ) /
-      (
-        range.max -
-        range.min
-      ),
-      0,
-      1
-    );
-
-  const centerX = 30;
-  const centerY = 32;
-  const radius = 24;
-
-  const tickCount = 21;
-
-  const colorVar =
-    `var(${STATUS_COLOR_VAR[
-      metric.status
-    ]})`;
-
-  let ticks = "";
-
-  for (
-    let index = 0;
-    index < tickCount;
-    index++
-  ) {
-    const tickFraction =
-      index /
-      (tickCount - 1);
-
-    const angleDeg =
-      180 -
-      tickFraction * 180;
-
-    const angleRad =
-      (angleDeg * Math.PI) /
-      180;
-
-    const innerRadius =
-      radius - 6;
-
-    const outerRadius =
-      radius;
-
-    const x1 =
-      centerX +
-      innerRadius *
-        Math.cos(angleRad);
-
-    const y1 =
-      centerY -
-      innerRadius *
-        Math.sin(angleRad);
-
-    const x2 =
-      centerX +
-      outerRadius *
-        Math.cos(angleRad);
-
-    const y2 =
-      centerY -
-      outerRadius *
-        Math.sin(angleRad);
-
-    const isNeedleTick =
-      Math.abs(
-        tickFraction -
-        fraction
-      ) <
-      (
-        1 /
-        (tickCount - 1)
-      ) / 2;
-
-    const tickColor =
-      isNeedleTick
-        ? colorVar
-        : "var(--line)";
-
-    const strokeWidth =
-      isNeedleTick
-        ? 2.6
-        : 1.4;
-
-    ticks += `
-      <line
-        x1="${x1.toFixed(2)}"
-        y1="${y1.toFixed(2)}"
-        x2="${x2.toFixed(2)}"
-        y2="${y2.toFixed(2)}"
-        stroke="${tickColor}"
-        stroke-width="${strokeWidth}"
-        stroke-linecap="round"
-      />
-    `;
-  }
-
-  const needleAngleDeg =
-    180 -
-    fraction * 180;
-
-  const needleAngleRad =
-    (
-      needleAngleDeg *
-      Math.PI
-    ) / 180;
-
-  const needleRadius =
-    radius - 3;
-
-  const needleX =
-    centerX +
-    needleRadius *
-      Math.cos(
-        needleAngleRad
-      );
-
-  const needleY =
-    centerY -
-    needleRadius *
-      Math.sin(
-        needleAngleRad
-      );
-
-  return `
-    <svg
-      width="60"
-      height="40"
-      viewBox="0 0 60 40"
-    >
-      ${ticks}
-
-      <circle
-        cx="${needleX.toFixed(2)}"
-        cy="${needleY.toFixed(2)}"
-        r="3.2"
-        fill="${colorVar}"
-      />
-    </svg>
-  `;
-}
-
-
-// ------------------------------------------------------------------
-// Helpers
-// ------------------------------------------------------------------
-
-function clamp(
-  value,
-  min,
-  max
-) {
-  return Math.max(
-    min,
-    Math.min(max, value)
-  );
-}
-
-function escapeHtml(value) {
-  const element =
-    document.createElement(
-      "div"
-    );
-
-  element.textContent =
-    value ?? "";
-
-  return element.innerHTML;
-}
