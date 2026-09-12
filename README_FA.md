@@ -358,5 +358,3 @@ Approx. FPS      : 18.95
 ## License
 
 This project was developed for educational and university purposes.
-
-```
