@@ -2,70 +2,75 @@
 
 A web-based computer vision application for analyzing sitting posture using a webcam or uploaded images.
 
-The application detects human pose landmarks with **MediaPipe Pose Landmarker**, calculates posture-related metrics, and provides an overall posture assessment.
+The application uses a locally stored **MediaPipe Pose Landmarker** model to detect human pose landmarks, calculate posture-related metrics, and provide an overall posture risk assessment.
 
 **🇬🇧 English** | [🇮🇷 فارسی](README_FA.md)
 
 ## Features
 
-- Image upload and analysis
-- Webcam capture and analysis
-- Real-time posture analysis
-- WebSocket-based live processing
-- MediaPipe Pose Landmarker
-- Posture metrics and overall assessment
-- Annotated pose visualization
-- REST API
-- Health check endpoint
-- Error handling
-- Unit and integration tests
-- WebSocket performance testing
+* Image upload and posture analysis
+* Webcam capture and analysis
+* Real-time posture analysis
+* WebSocket-based live processing
+* MediaPipe Pose Landmarker with `IMAGE` and `LIVE_STREAM` modes
+* Local pose model (`pose_landmarker_full.task`)
+* Posture-related metrics
+* Overall posture risk assessment
+* Annotated pose visualization
+* Camera-view estimation
+* REST API
+* Health check endpoint
+* Application-specific error handling
+* Unit and integration tests
+* WebSocket testing
+* Performance baseline testing
+* Separate frontend and backend
 
 ## Architecture
 
-The application follows a lightweight layered architecture that separates the web interface, API layer, posture analysis, computer vision, and utility components.
+The application follows a lightweight layered architecture that separates the frontend, API layer, posture analysis, computer vision, and utility components.
 
 ```text
                          ┌──────────────────────────┐
-                         │        Frontend          │
-                         │      HTML / CSS / JS      │
+                         │         Frontend         │
+                         │      HTML / CSS / JS     │
                          │                          │
-                         │  Upload │ Webcam │ Live │
+                         │  Upload │ Webcam │ Live  │
                          └────────────┬─────────────┘
                                       │
-                         ┌────────────┴────────────┐
-                         │                         │
+                         ┌────────────┴─────────────┐
+                         │                          │
                       HTTP/REST                WebSocket
-                         │                         │
-                         ▼                         ▼
+                         │                          │
+                         ▼                          ▼
               ┌─────────────────────┐   ┌─────────────────────┐
-              │   Analyze Route     │   │  WebSocket Route   │
-              │   POST /api/analyze │   │  /ws/posture       │
+              │    Analyze Route    │   │   WebSocket Route   │
+              │   POST /api/analyze │   │     /ws/posture     │
               └──────────┬──────────┘   └──────────┬──────────┘
                          │                         │
                          └────────────┬────────────┘
                                       ▼
                          ┌──────────────────────────┐
-                         │     PostureService       │
+                         │      PostureService      │
                          │                          │
                          │ Detection + Analysis     │
                          │ + Result Coordination    │
                          └────────────┬─────────────┘
                                       │
-                     ┌────────────────┴────────────────┐
-                     │                                 │
-                     ▼                                 ▼
-          ┌─────────────────────┐          ┌─────────────────────┐
-          │    PoseDetector     │          │   Posture Metrics   │
-          │                     │          │                     │
-          │ MediaPipe Pose      │          │ Posture calculations │
-          │ Landmarker          │          │ and risk assessment  │
-          └──────────┬──────────┘          └──────────┬──────────┘
-                     │                                 │
-                     └────────────────┬────────────────┘
+                       ┌──────────────┴──────────────┐
+                       │                             │
+                       ▼                             ▼
+              ┌─────────────────────┐    ┌─────────────────────┐
+              │    PoseDetector     │    │   Posture Metrics   │
+              │                     │    │                     │
+              │ MediaPipe Pose      │    │ Posture calculations│
+              │ Landmarker          │    │ and risk assessment │
+              └──────────┬──────────┘    └──────────┬──────────┘
+                         │                          │
+                         └────────────┬─────────────┘
                                       ▼
                          ┌──────────────────────────┐
-                         │   Result / Serializer    │
+                         │ Result / Serializer      │
                          │                          │
                          │ Metrics + Overall +      │
                          │ Annotated Image          │
@@ -74,38 +79,42 @@ The application follows a lightweight layered architecture that separates the we
                                       ▼
                          ┌──────────────────────────┐
                          │         Frontend         │
-                         │     Rendered Results     │
+                         │      Rendered Results    │
                          └──────────────────────────┘
 ```
 
-### Main Components
+## Main Components
 
-| Component           | Responsibility                                                                        |
-| ------------------- | ------------------------------------------------------------------------------------- |
-| **Frontend**        | User interface, image upload, webcam access, live communication, and result rendering |
-| **Analyze Route**   | Handles single-image REST requests                                                    |
-| **WebSocket Route** | Handles real-time posture analysis                                                    |
-| **PostureService**  | Coordinates pose detection, posture analysis, and annotated results                   |
-| **PoseDetector**    | Wraps MediaPipe Pose Landmarker for IMAGE and LIVE_STREAM modes                       |
-| **Posture Metrics** | Calculates posture-related metrics and overall assessment                             |
-| **Serializer**      | Converts internal analysis results into API/WebSocket responses                       |
-| **Utilities**       | Image encoding/decoding and pose visualization                                        |
+| Component           | Responsibility                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------- |
+| **Frontend**        | User interface, image upload, webcam access, live communication, and result rendering  |
+| **Analyze Route**   | Handles single-image analysis through REST                                             |
+| **Health Route**    | Provides a simple backend health check                                                 |
+| **WebSocket Route** | Handles real-time posture analysis                                                     |
+| **PostureService**  | Coordinates pose detection, posture analysis, and annotated result generation          |
+| **PoseDetector**    | Wraps MediaPipe Pose Landmarker for `IMAGE` and session-based `LIVE_STREAM` processing |
+| **Posture Metrics** | Calculates posture-related metrics and overall risk                                    |
+| **Serializer**      | Converts internal analysis results into API and WebSocket responses                    |
+| **Exceptions**      | Provides application-specific error types                                              |
+| **Utilities**       | Handles image processing and pose visualization                                        |
 
 ## Project Structure
 
 ```text
-Finale 2/
+posture-checker/
 │
 ├── run.py
+├── README.md
+├── README_FA.md
+├── .gitignore
 │
 ├── backend/
 │   ├── app/
 │   │   ├── api/
 │   │   │   ├── routes/
-│   │   │   │   ├── analyze.py
-│   │   │   │   ├── health.py
-│   │   │   │   └── websocket.py
-│   │   │   │
+│   │   │   ├── │   ├── analyze.py
+│   │   │   ├── │   ├── health.py
+│   │   │   └── │   └── websocket.py
 │   │   │   └── serializers/
 │   │   │       └── posture.py
 │   │   │
@@ -158,31 +167,32 @@ Finale 2/
 
 ### Backend
 
-- Python 3.11+
-- FastAPI
-- Uvicorn
-- MediaPipe
-- OpenCV
-- NumPy
-- Pillow
+* Python 3.11+
+* FastAPI
+* Uvicorn
+* MediaPipe
+* OpenCV
+* NumPy
+* Pillow
 
 ### Frontend
 
-- HTML
-- CSS
-- JavaScript
-- WebSocket API
-- MediaDevices API
+* HTML
+* CSS
+* JavaScript
+* WebSocket API
+* MediaDevices API
 
 ### Testing
 
-- Pytest
-- Pytest-Cov
-- WebSockets
+* Pytest
+* Pytest-Cov
+* WebSockets
+* HTTPX2
 
 ## Requirements
 
-### Runtime
+### Runtime Dependencies
 
 ```text
 fastapi>=0.110
@@ -194,14 +204,14 @@ pillow>=10.0
 numpy>=1.26,<2.0
 ```
 
-### Development and Testing
+### Development and Testing Dependencies
 
 ```text
 -r requirements.txt
-
 pytest>=9.0
 pytest-cov>=7.0
 websockets>=15.0
+httpx2>=0.2
 ```
 
 ## Installation
@@ -213,19 +223,31 @@ git clone https://github.com/8Whoknow3/posture-checker.git
 cd posture-checker
 ```
 
-Create and activate a Python 3.11 environment:
+Create a Python 3.11 environment:
 
 ```powershell
 conda create -n posture-web python=3.11
 conda activate posture-web
 ```
 
-Install dependencies:
+Install runtime and development dependencies:
 
 ```powershell
 cd backend
 python -m pip install -r requirements-dev.txt
 ```
+
+## Local Pose Model
+
+The application uses a locally stored MediaPipe Pose Landmarker model:
+
+```text
+backend/models/pose_landmarker_full.task
+```
+
+The model is loaded directly from the local filesystem and is used for pose inference without requiring an online inference API.
+
+MediaPipe provides the runtime used to process the model and obtain human pose landmarks.
 
 ## Running the Application
 
@@ -235,29 +257,40 @@ From the project root:
 python run.py
 ```
 
-The application starts:
+The launcher starts both the backend and frontend automatically.
+
+### Application URLs
 
 ```text
-Frontend: http://127.0.0.1:5500
-Backend:  http://127.0.0.1:8000
-Swagger:  http://127.0.0.1:8000/docs
+Frontend : http://127.0.0.1:5500
+Backend  : http://127.0.0.1:8000
+Swagger  : http://127.0.0.1:8000/docs
 ```
 
-## API
+## Health Check
 
-### Health Check
+To verify that the backend is running:
 
-```http
-GET /api/health
+```text
+http://127.0.0.1:8000/api/health
 ```
 
-Response:
+Expected response:
 
 ```json
 {
   "status": "ok"
 }
 ```
+
+## API
+
+### REST Endpoints
+
+| Method | Endpoint       | Description                      |
+| ------ | -------------- | -------------------------------- |
+| `GET`  | `/api/health`  | Checks backend availability      |
+| `POST` | `/api/analyze` | Analyzes a single uploaded image |
 
 ### Image Analysis
 
@@ -267,15 +300,22 @@ POST /api/analyze
 
 The endpoint accepts an image using `multipart/form-data`.
 
+A successful response contains:
+
+* `annotated_image`
+* `view_label`
+* `metrics`
+* `overall`
+
 ### Live WebSocket
 
 ```text
-/ws/posture
+ws://127.0.0.1:8000/ws/posture
 ```
 
-The client sends JPEG frames as binary WebSocket messages.
+In live mode, the browser sends JPEG frames as binary WebSocket messages.
 
-Successful response:
+Example successful response:
 
 ```json
 {
@@ -288,7 +328,7 @@ Successful response:
 }
 ```
 
-Error response:
+Example error response:
 
 ```json
 {
@@ -296,6 +336,82 @@ Error response:
   "error": "No person detected."
 }
 ```
+
+## Posture Metrics
+
+The current implementation provides five posture-related metrics.
+
+### Tier 1
+
+* Craniovertebral Angle (CVA)
+* Trunk Flexion
+* Spine Alignment
+
+### Tier 2
+
+* Head Tilt
+* Trunk Lateral
+
+### Side View
+
+For side-view images, **Head Tilt** and **Trunk Lateral** are reported as unavailable because the required information cannot be reliably evaluated from that camera view.
+
+Example:
+
+```json
+{
+  "key": "head_tilt",
+  "value": null,
+  "status": "unavailable",
+  "status_label": "قابل سنجش نیست"
+}
+```
+
+Metrics marked as `unavailable` do not increase the overall risk score.
+
+## MediaPipe Processing Modes
+
+### `IMAGE`
+
+The `IMAGE` mode is used for single-image analysis through the REST API.
+
+```text
+Image
+  ↓
+REST API
+  ↓
+PoseDetector
+  ↓
+MediaPipe IMAGE
+  ↓
+Posture Metrics
+  ↓
+Result
+```
+
+### `LIVE_STREAM`
+
+The `LIVE_STREAM` mode is used for real-time analysis through WebSocket.
+
+```text
+Camera
+  ↓
+WebSocket
+  ↓
+PoseDetector
+  ↓
+MediaPipe LIVE_STREAM
+  ↓
+Posture Metrics
+  ↓
+Result
+  ↓
+WebSocket
+  ↓
+Frontend
+```
+
+Each WebSocket session creates its own `LIVE_STREAM` detector. This keeps sessions isolated and allows MediaPipe timestamps to remain monotonically increasing.
 
 ## Testing
 
@@ -306,9 +422,13 @@ cd backend
 pytest -q
 ```
 
-Run WebSocket tests:
+Run individual test groups:
 
 ```powershell
+pytest tests/test_pose_detector.py -v
+pytest tests/test_posture_metrics.py -v
+pytest tests/test_posture_service.py -v
+pytest tests/test_analyze.py -v
 pytest tests/test_websocket.py -v
 ```
 
@@ -318,9 +438,33 @@ Run the WebSocket performance test:
 pytest tests/test_websocket_performance.py -s -v
 ```
 
+## Test Status
+
+The current project passes the complete automated test suite:
+
+```text
+32 passed
+```
+
+The test suite covers:
+
+* Image utilities
+* Drawing
+* Pose detection
+* `IMAGE` mode
+* `LIVE_STREAM` mode
+* Posture metrics
+* Posture service
+* Serializer
+* REST API
+* Health API
+* WebSocket API
+* Error handling
+* Performance baseline
+
 ## Performance
 
-A development test using 20 frames produced the following baseline:
+A local WebSocket development test using 20 frames produced the following baseline:
 
 ```text
 Frames requested : 20
@@ -329,8 +473,103 @@ Average latency  : 52.8 ms
 Approx. FPS      : 18.95
 ```
 
-Performance may vary depending on hardware, camera resolution, and runtime conditions.
+Browser-side testing produced approximately:
 
-## License
+```text
+Latency : ~24 ms
+FPS     : ~13
+```
 
-This project was developed for educational and university purposes.
+These values are development measurements and may vary depending on hardware, camera resolution, browser rendering, and runtime conditions.
+
+## Running with `run.py`
+
+For easier local development, `run.py` automates the application startup process:
+
+```text
+Backend
+   ↓
+Wait for backend readiness
+   ↓
+Frontend
+   ↓
+Wait for frontend readiness
+   ↓
+Open browser
+```
+
+Press:
+
+```text
+Ctrl + C
+```
+
+to stop the application.
+
+## Development Notes
+
+The project is structured so that pose detection, posture metrics, analysis coordination, API handling, and frontend rendering remain separated.
+
+### Static Image Flow
+
+```text
+Image
+  ↓
+REST
+  ↓
+PostureService
+  ↓
+PoseDetector
+  ↓
+MediaPipe IMAGE
+  ↓
+Posture Metrics
+  ↓
+Result
+```
+
+### Real-Time Flow
+
+```text
+Camera
+  ↓
+WebSocket
+  ↓
+PoseDetector
+  ↓
+MediaPipe LIVE_STREAM
+  ↓
+Posture Metrics
+  ↓
+Result
+  ↓
+WebSocket
+  ↓
+Frontend
+```
+
+## Current Project Status
+
+The main technical scope of the project is complete:
+
+```text
+✅ Backend
+✅ Frontend
+✅ REST API
+✅ WebSocket
+✅ MediaPipe Pose Landmarker
+✅ IMAGE / LIVE_STREAM
+✅ Posture Metrics
+✅ Error Handling
+✅ Local Model
+✅ Automated Tests
+✅ Performance Baseline
+✅ Code Audit
+✅ Clean Install
+```
+
+Features such as database integration and further performance optimization are outside the current primary scope.
+
+## Project Goal
+
+This project was developed for educational and university purposes, with the goal of exploring practical applications of computer vision for sitting-posture analysis, real-time WebSocket communication, and separated frontend/backend architecture.

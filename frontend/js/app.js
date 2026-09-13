@@ -1,6 +1,11 @@
 const BACKEND_URL = "http://127.0.0.1:8000";
 const WEBSOCKET_URL = "ws://127.0.0.1:8000/ws/posture";
 
+
+// ------------------------------------------------------------------
+// DOM Elements
+// ------------------------------------------------------------------
+
 const dropzone = document.getElementById("dropzone");
 const dropzoneContent = document.getElementById("dropzoneContent");
 const fileInput = document.getElementById("fileInput");
@@ -12,52 +17,48 @@ const tabWebcam = document.getElementById("tabWebcam");
 const modeUpload = document.getElementById("modeUpload");
 const modeWebcam = document.getElementById("modeWebcam");
 
-const webcamPlaceholder =
-  document.getElementById("webcamPlaceholder");
+const webcamPlaceholder = document.getElementById("webcamPlaceholder");
 const webcamVideo = document.getElementById("webcamVideo");
 const webcamPreview = document.getElementById("webcamPreview");
 const webcamCanvas = document.getElementById("webcamCanvas");
 
-const startCameraBtn =
-  document.getElementById("startCameraBtn");
-const webcamControls =
-  document.getElementById("webcamControls");
-const webcamRetakeControls =
-  document.getElementById("webcamRetakeControls");
+const startCameraBtn = document.getElementById("startCameraBtn");
+const webcamControls = document.getElementById("webcamControls");
+const webcamRetakeControls = document.getElementById(
+  "webcamRetakeControls",
+);
 
 const captureBtn = document.getElementById("captureBtn");
 const retakeBtn = document.getElementById("retakeBtn");
 const webcamError = document.getElementById("webcamError");
 
-const liveToggleBtn =
-  document.getElementById("liveToggleBtn");
-const liveIndicator =
-  document.getElementById("liveIndicator");
+const liveToggleBtn = document.getElementById("liveToggleBtn");
+const liveIndicator = document.getElementById("liveIndicator");
 
 const emptyState = document.getElementById("emptyState");
 const loadingState = document.getElementById("loadingState");
 const errorState = document.getElementById("errorState");
-const resultsContent =
-  document.getElementById("resultsContent");
+const resultsContent = document.getElementById("resultsContent");
 
-const annotatedImg =
-  document.getElementById("annotatedImg");
+const annotatedImg = document.getElementById("annotatedImg");
 const viewBadge = document.getElementById("viewBadge");
 
-const overallLabel =
-  document.getElementById("overallLabel");
-const overallScore =
-  document.getElementById("overallScore");
-const overallMeterFill =
-  document.getElementById("overallMeterFill");
+const overallLabel = document.getElementById("overallLabel");
+const overallScore = document.getElementById("overallScore");
+const overallMeterFill = document.getElementById(
+  "overallMeterFill",
+);
 
 const tier1Grid = document.getElementById("tier1Grid");
 const tier2Grid = document.getElementById("tier2Grid");
 
-const correctionsCard =
-  document.getElementById("correctionsCard");
-const correctionsList =
-  document.getElementById("correctionsList");
+const correctionsCard = document.getElementById("correctionsCard");
+const correctionsList = document.getElementById("correctionsList");
+
+
+// ------------------------------------------------------------------
+// State
+// ------------------------------------------------------------------
 
 let webcamStream = null;
 let selectedFile = null;
@@ -67,6 +68,11 @@ let liveMode = false;
 let liveInFlight = false;
 let liveTimeoutId = null;
 let postureSocket = null;
+
+
+// ------------------------------------------------------------------
+// Configuration
+// ------------------------------------------------------------------
 
 const LIVE_MAX_DIM = 640;
 const LIVE_JPEG_QUALITY = 0.7;
@@ -150,13 +156,10 @@ dropzone.addEventListener(
     event.preventDefault();
     dropzone.classList.remove("dragover");
 
-    if (
-      event.dataTransfer.files &&
-      event.dataTransfer.files[0]
-    ) {
-      handleFile(
-        event.dataTransfer.files[0],
-      );
+    const file = event.dataTransfer.files?.[0];
+
+    if (file) {
+      handleFile(file);
     }
   },
 );
@@ -164,13 +167,10 @@ dropzone.addEventListener(
 fileInput.addEventListener(
   "change",
   () => {
-    if (
-      fileInput.files &&
-      fileInput.files[0]
-    ) {
-      handleFile(
-        fileInput.files[0],
-      );
+    const file = fileInput.files?.[0];
+
+    if (file) {
+      handleFile(file);
     }
   },
 );
@@ -181,10 +181,7 @@ function handleFile(file) {
   }
 
   selectedFile = file;
-
-  previewImg.src =
-    URL.createObjectURL(file);
-
+  previewImg.src = URL.createObjectURL(file);
   previewImg.hidden = false;
 
   dropzoneContent.hidden = true;
@@ -205,15 +202,8 @@ function setInputMode(mode) {
 
   const isUpload = mode === "upload";
 
-  tabUpload.classList.toggle(
-    "active",
-    isUpload,
-  );
-
-  tabWebcam.classList.toggle(
-    "active",
-    !isUpload,
-  );
+  tabUpload.classList.toggle("active", isUpload);
+  tabWebcam.classList.toggle("active", !isUpload);
 
   tabUpload.setAttribute(
     "aria-selected",
@@ -236,12 +226,13 @@ function setInputMode(mode) {
     stopWebcamStream();
     resetWebcamUI();
     analyzeBtn.hidden = false;
-  } else {
-    previewImg.hidden = true;
-    dropzoneContent.hidden = false;
-    fileInput.value = "";
-    analyzeBtn.hidden = false;
+    return;
   }
+
+  previewImg.hidden = true;
+  dropzoneContent.hidden = false;
+  fileInput.value = "";
+  analyzeBtn.hidden = false;
 }
 
 tabUpload.addEventListener(
@@ -265,15 +256,10 @@ function resetWebcamUI() {
   webcamPreview.hidden = true;
   webcamControls.hidden = true;
   webcamRetakeControls.hidden = true;
-
   liveIndicator.hidden = true;
 
-  liveToggleBtn.textContent =
-    "شروع تحلیل زنده";
-
-  liveToggleBtn.classList.remove(
-    "btn-live-active",
-  );
+  liveToggleBtn.textContent = "شروع تحلیل زنده";
+  liveToggleBtn.classList.remove("btn-live-active");
 
   clearWebcamError();
 }
@@ -296,9 +282,7 @@ function stopWebcamStream() {
 
   webcamStream
     .getTracks()
-    .forEach(
-      (track) => track.stop(),
-    );
+    .forEach((track) => track.stop());
 
   webcamStream = null;
 }
@@ -313,29 +297,24 @@ async function startCamera() {
     showWebcamError(
       "مرورگر شما از دسترسی به دوربین پشتیبانی نمی‌کند.",
     );
-
     return;
   }
 
   try {
-    webcamStream =
-      await navigator.mediaDevices.getUserMedia(
-        {
-          video: {
-            facingMode: "user",
-            width: {
-              ideal: 1280,
-            },
-            height: {
-              ideal: 960,
-            },
-          },
-          audio: false,
+    webcamStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "user",
+        width: {
+          ideal: 1280,
         },
-      );
+        height: {
+          ideal: 960,
+        },
+      },
+      audio: false,
+    });
 
-    webcamVideo.srcObject =
-      webcamStream;
+    webcamVideo.srcObject = webcamStream;
 
     webcamPlaceholder.hidden = true;
     webcamPreview.hidden = true;
@@ -343,7 +322,6 @@ async function startCamera() {
 
     webcamControls.hidden = false;
     webcamRetakeControls.hidden = true;
-
   } catch {
     showWebcamError(
       "دسترسی به دوربین ممکن نشد. مطمئن شوید مرورگر اجازه‌ی دسترسی به وبکم را دارد و دستگاهی متصل است.",
@@ -364,11 +342,8 @@ startCameraBtn.addEventListener(
 captureBtn.addEventListener(
   "click",
   () => {
-    const width =
-      webcamVideo.videoWidth;
-
-    const height =
-      webcamVideo.videoHeight;
+    const width = webcamVideo.videoWidth;
+    const height = webcamVideo.videoHeight;
 
     if (!width || !height) {
       return;
@@ -377,8 +352,7 @@ captureBtn.addEventListener(
     webcamCanvas.width = width;
     webcamCanvas.height = height;
 
-    const context =
-      webcamCanvas.getContext("2d");
+    const context = webcamCanvas.getContext("2d");
 
     context.drawImage(
       webcamVideo,
@@ -394,7 +368,6 @@ captureBtn.addEventListener(
           showWebcamError(
             "خطا در ثبت عکس از دوربین. دوباره تلاش کنید.",
           );
-
           return;
         }
 
@@ -406,9 +379,7 @@ captureBtn.addEventListener(
           },
         );
 
-        webcamPreview.src =
-          URL.createObjectURL(blob);
-
+        webcamPreview.src = URL.createObjectURL(blob);
         webcamPreview.hidden = false;
         webcamVideo.hidden = true;
 
@@ -435,9 +406,10 @@ function backToLiveChoice() {
   if (webcamStream) {
     webcamVideo.hidden = false;
     webcamControls.hidden = false;
-  } else {
-    startCamera();
+    return;
   }
+
+  startCamera();
 }
 
 retakeBtn.addEventListener(
@@ -447,16 +419,15 @@ retakeBtn.addEventListener(
 
 
 // ------------------------------------------------------------------
-// Live WebSocket
+// Live Mode
 // ------------------------------------------------------------------
 
 function setLiveModeUI(active) {
   liveIndicator.hidden = !active;
 
-  liveToggleBtn.textContent =
-    active
-      ? "توقف تحلیل زنده"
-      : "شروع تحلیل زنده";
+  liveToggleBtn.textContent = active
+    ? "توقف تحلیل زنده"
+    : "شروع تحلیل زنده";
 
   liveToggleBtn.classList.toggle(
     "btn-live-active",
@@ -468,16 +439,14 @@ function setLiveModeUI(active) {
 }
 
 function startLiveMode() {
-  if (
-    liveMode ||
-    !webcamStream
-  ) {
-    if (!webcamStream) {
-      showWebcamError(
-        "ابتدا دوربین را روشن کنید.",
-      );
-    }
+  if (liveMode) {
+    return;
+  }
 
+  if (!webcamStream) {
+    showWebcamError(
+      "ابتدا دوربین را روشن کنید.",
+    );
     return;
   }
 
@@ -495,10 +464,7 @@ function stopLiveMode() {
   liveInFlight = false;
 
   if (liveTimeoutId !== null) {
-    clearTimeout(
-      liveTimeoutId,
-    );
-
+    clearTimeout(liveTimeoutId);
     liveTimeoutId = null;
   }
 
@@ -516,26 +482,23 @@ function connectPostureWebSocket() {
     return;
   }
 
-  if (
+  const isSocketActive =
     postureSocket &&
     (
-      postureSocket.readyState ===
-        WebSocket.OPEN ||
-      postureSocket.readyState ===
-        WebSocket.CONNECTING
-    )
-  ) {
+      postureSocket.readyState === WebSocket.OPEN ||
+      postureSocket.readyState === WebSocket.CONNECTING
+    );
+
+  if (isSocketActive) {
     return;
   }
 
   try {
-    postureSocket =
-      new WebSocket(
-        WEBSOCKET_URL,
-      );
+    postureSocket = new WebSocket(
+      WEBSOCKET_URL,
+    );
 
-    postureSocket.binaryType =
-      "arraybuffer";
+    postureSocket.binaryType = "arraybuffer";
 
     postureSocket.addEventListener(
       "open",
@@ -556,7 +519,6 @@ function connectPostureWebSocket() {
       "close",
       handleWebSocketClose,
     );
-
   } catch {
     handleWebSocketError();
   }
@@ -579,10 +541,7 @@ function handleWebSocketMessage(event) {
   let data;
 
   try {
-    data = JSON.parse(
-      event.data,
-    );
-
+    data = JSON.parse(event.data);
   } catch {
     liveInFlight = false;
 
@@ -591,23 +550,17 @@ function handleWebSocketMessage(event) {
     );
 
     scheduleLiveFrame(false);
-
     return;
   }
 
   liveInFlight = false;
 
-  if (
-    data.type === "posture_result"
-  ) {
+  if (data.type === "posture_result") {
     clearWebcamError();
 
     renderResults(data);
     setState("results");
-
-  } else if (
-    data.type === "error"
-  ) {
+  } else if (data.type === "error") {
     handleLiveError(
       data.error ||
         "خطایی در تحلیل فریم رخ داد.",
@@ -618,9 +571,7 @@ function handleWebSocketMessage(event) {
 }
 
 function handleLiveError(message) {
-  if (
-    resultsContent.hidden
-  ) {
+  if (resultsContent.hidden) {
     showError(message);
     return;
   }
@@ -659,9 +610,7 @@ function scheduleWebSocketReconnect() {
   }
 
   if (liveTimeoutId !== null) {
-    clearTimeout(
-      liveTimeoutId,
-    );
+    clearTimeout(liveTimeoutId);
   }
 
   liveTimeoutId = setTimeout(
@@ -689,10 +638,8 @@ function closePostureWebSocket() {
   postureSocket.onclose = null;
 
   if (
-    postureSocket.readyState ===
-      WebSocket.OPEN ||
-    postureSocket.readyState ===
-      WebSocket.CONNECTING
+    postureSocket.readyState === WebSocket.OPEN ||
+    postureSocket.readyState === WebSocket.CONNECTING
   ) {
     postureSocket.close();
   }
@@ -711,29 +658,26 @@ function scheduleLiveFrame(immediate) {
   }
 
   if (liveTimeoutId !== null) {
-    clearTimeout(
-      liveTimeoutId,
-    );
-
+    clearTimeout(liveTimeoutId);
     liveTimeoutId = null;
   }
 
   liveTimeoutId = setTimeout(
     sendLiveFrame,
-    immediate
-      ? 0
-      : 50,
+    immediate ? 0 : 50,
   );
 }
 
 function sendLiveFrame() {
   liveTimeoutId = null;
 
+  const socketReady =
+    postureSocket &&
+    postureSocket.readyState === WebSocket.OPEN;
+
   if (
     !liveMode ||
-    !postureSocket ||
-    postureSocket.readyState !==
-      WebSocket.OPEN ||
+    !socketReady ||
     liveInFlight ||
     !webcamStream ||
     webcamVideo.hidden
@@ -741,51 +685,36 @@ function sendLiveFrame() {
     return;
   }
 
-  const nativeWidth =
-    webcamVideo.videoWidth;
+  const nativeWidth = webcamVideo.videoWidth;
+  const nativeHeight = webcamVideo.videoHeight;
 
-  const nativeHeight =
-    webcamVideo.videoHeight;
-
-  if (
-    !nativeWidth ||
-    !nativeHeight
-  ) {
+  if (!nativeWidth || !nativeHeight) {
     scheduleLiveFrame(false);
     return;
   }
 
   const scale = Math.min(
     1,
-    LIVE_MAX_DIM /
-      Math.max(
-        nativeWidth,
-        nativeHeight,
-      ),
+    LIVE_MAX_DIM / Math.max(
+      nativeWidth,
+      nativeHeight,
+    ),
   );
 
   const width = Math.max(
     1,
-    Math.round(
-      nativeWidth * scale,
-    ),
+    Math.round(nativeWidth * scale),
   );
 
   const height = Math.max(
     1,
-    Math.round(
-      nativeHeight * scale,
-    ),
+    Math.round(nativeHeight * scale),
   );
 
-  webcamCanvas.width =
-    width;
+  webcamCanvas.width = width;
+  webcamCanvas.height = height;
 
-  webcamCanvas.height =
-    height;
-
-  const context =
-    webcamCanvas.getContext("2d");
+  const context = webcamCanvas.getContext("2d");
 
   context.drawImage(
     webcamVideo,
@@ -799,13 +728,13 @@ function sendLiveFrame() {
 
   webcamCanvas.toBlob(
     (blob) => {
-      if (
-        !blob ||
-        !liveMode ||
-        !postureSocket ||
-        postureSocket.readyState !==
-          WebSocket.OPEN
-      ) {
+      const canSend =
+        blob &&
+        liveMode &&
+        postureSocket &&
+        postureSocket.readyState === WebSocket.OPEN;
+
+      if (!canSend) {
         liveInFlight = false;
         return;
       }
@@ -822,9 +751,10 @@ liveToggleBtn.addEventListener(
   () => {
     if (liveMode) {
       stopLiveMode();
-    } else {
-      startLiveMode();
+      return;
     }
+
+    startLiveMode();
   },
 );
 
@@ -842,8 +772,7 @@ analyzeBtn.addEventListener(
 
     setState("loading");
 
-    const formData =
-      new FormData();
+    const formData = new FormData();
 
     formData.append(
       "image",
@@ -851,30 +780,26 @@ analyzeBtn.addEventListener(
     );
 
     try {
-      const response =
-        await fetch(
-          `${BACKEND_URL}/api/analyze`,
-          {
-            method: "POST",
-            body: formData,
-          },
-        );
+      const response = await fetch(
+        `${BACKEND_URL}/api/analyze`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
         showError(
           data.error ||
             "خطای ناشناخته در تحلیل تصویر رخ داد.",
         );
-
         return;
       }
 
       renderResults(data);
       setState("results");
-
     } catch {
       showError(
         "ارتباط با سرور برقرار نشد. مطمئن شوید سرور FastAPI در حال اجراست.",
@@ -889,23 +814,14 @@ analyzeBtn.addEventListener(
 // ------------------------------------------------------------------
 
 function setState(state) {
-  emptyState.hidden =
-    state !== "empty";
-
-  loadingState.hidden =
-    state !== "loading";
-
-  errorState.hidden =
-    state !== "error";
-
-  resultsContent.hidden =
-    state !== "results";
+  emptyState.hidden = state !== "empty";
+  loadingState.hidden = state !== "loading";
+  errorState.hidden = state !== "error";
+  resultsContent.hidden = state !== "results";
 }
 
 function showError(message) {
-  errorState.textContent =
-    message;
-
+  errorState.textContent = message;
   setState("error");
 }
 
@@ -915,65 +831,50 @@ function showError(message) {
 // ------------------------------------------------------------------
 
 function renderResults(data) {
-  annotatedImg.src =
-    data.annotated_image;
+  annotatedImg.src = data.annotated_image;
 
   viewBadge.textContent =
     `زاویه دوربین: ${data.view_label}`;
 
-  const overall =
-    data.overall;
+  const overall = data.overall;
 
   overallLabel.textContent =
-    OVERALL_LEVEL_TEXT[
-      overall.level
-    ] ||
+    OVERALL_LEVEL_TEXT[overall.level] ||
     overall.level_label;
 
   overallScore.textContent =
     `${overall.score} / ${overall.max_score}`;
 
-  const percentage =
-    Math.min(
-      100,
-      Math.round(
-        (
-          overall.score /
-          overall.max_score
-        ) * 100,
-      ),
-    );
+  const percentage = Math.min(
+    100,
+    Math.round(
+      (
+        overall.score /
+        overall.max_score
+      ) * 100,
+    ),
+  );
 
   overallMeterFill.style.width =
     `${percentage}%`;
 
   overallMeterFill.style.background =
-    OVERALL_LEVEL_COLOR[
-      overall.level
-    ] ||
+    OVERALL_LEVEL_COLOR[overall.level] ||
     "var(--caution)";
 
-  const tier1 =
-    data.metrics.filter(
-      (metric) =>
-        metric.tier === 1,
-    );
+  const tier1 = data.metrics.filter(
+    (metric) => metric.tier === 1,
+  );
 
-  const tier2 =
-    data.metrics.filter(
-      (metric) =>
-        metric.tier === 2,
-    );
+  const tier2 = data.metrics.filter(
+    (metric) => metric.tier === 2,
+  );
 
   tier1Grid.innerHTML =
-    tier1
-      .map(renderMetricCard)
-      .join("");
+    tier1.map(renderMetricCard).join("");
 
   tier2Grid.innerHTML =
-    tier2
-      .map(renderMetricCard)
-      .join("");
+    tier2.map(renderMetricCard).join("");
 
   const needsCorrection =
     data.metrics.filter(
@@ -982,9 +883,7 @@ function renderResults(data) {
         metric.status === "poor",
     );
 
-  if (
-    needsCorrection.length > 0
-  ) {
+  if (needsCorrection.length > 0) {
     correctionsList.innerHTML =
       needsCorrection
         .map(
@@ -997,12 +896,9 @@ function renderResults(data) {
         )
         .join("");
 
-    correctionsCard.hidden =
-      false;
-
+    correctionsCard.hidden = false;
   } else {
-    correctionsCard.hidden =
-      true;
+    correctionsCard.hidden = true;
   }
 }
 
@@ -1012,8 +908,7 @@ function renderResults(data) {
 // ------------------------------------------------------------------
 
 function renderMetricCard(metric) {
-  const gauge =
-    buildGaugeSvg(metric);
+  const gauge = buildGaugeSvg(metric);
 
   const noteHtml =
     metric.convention_note
@@ -1072,12 +967,12 @@ function buildGaugeSvg(metric) {
     return `
       <svg
         width="72"
-        height="48"
-        viewBox="0 0 72 48"
+        height="40"
+        viewBox="0 0 72 40"
         aria-label="قابل سنجش نیست"
       >
         <path
-          d="M 10 38 A 26 26 0 0 1 62 38"
+          d="M 8 32 A 26 26 0 0 1 64 32"
           fill="none"
           stroke="var(--line)"
           stroke-width="4"
@@ -1086,7 +981,7 @@ function buildGaugeSvg(metric) {
 
         <text
           x="36"
-          y="31"
+          y="29"
           text-anchor="middle"
           fill="var(--text-faint)"
           font-size="8"
@@ -1105,30 +1000,28 @@ function buildGaugeSvg(metric) {
       higherIsBetter: true,
     };
 
+  const value = Number(metric.value);
+
+  if (!Number.isFinite(value)) {
+    return "";
+  }
+
   let fraction =
     clamp(
-      (metric.value - range.min) /
+      (value - range.min) /
         (range.max - range.min),
       0,
       1,
     );
 
-  /*
-   * برای معیارهایی که مقدار کمتر بهتر است،
-   * جهت Gauge را معکوس می‌کنیم.
-   */
   if (!range.higherIsBetter) {
     fraction = 1 - fraction;
   }
 
   const centerX = 36;
-  const centerY = 38;
-  const radius = 25;
-
-  const startAngle = 180;
-  const endAngle = 0;
-
-  const totalTicks = 13;
+  const centerY = 32;
+  const radius = 24;
+  const tickCount = 13;
 
   const colorVar =
     `var(${STATUS_COLOR_VAR[metric.status]})`;
@@ -1137,23 +1030,21 @@ function buildGaugeSvg(metric) {
 
   for (
     let index = 0;
-    index < totalTicks;
+    index < tickCount;
     index++
   ) {
     const tickFraction =
-      index /
-      (totalTicks - 1);
+      index / (tickCount - 1);
 
     const angleDeg =
-      startAngle -
-      tickFraction * 180;
+      180 - tickFraction * 180;
 
     const angleRad =
-      (angleDeg * Math.PI) /
-      180;
+      (angleDeg * Math.PI) / 180;
+
+    const innerRadius = radius - 6;
 
     const outerRadius = radius;
-    const innerRadius = radius - 6;
 
     const x1 =
       centerX +
@@ -1188,16 +1079,11 @@ function buildGaugeSvg(metric) {
     `;
   }
 
-  /*
-   * عقربه
-   */
   const needleAngleDeg =
-    180 -
-    fraction * 180;
+    180 - fraction * 180;
 
   const needleAngleRad =
-    (needleAngleDeg * Math.PI) /
-    180;
+    (needleAngleDeg * Math.PI) / 180;
 
   const needleLength =
     radius - 5;
@@ -1212,29 +1098,13 @@ function buildGaugeSvg(metric) {
     needleLength *
       Math.sin(needleAngleRad);
 
-  /*
-   * نقطه انتهای عقربه
-   */
-  const tipX = needleX;
-  const tipY = needleY;
-
-  /*
-   * نقاط ابتدا و انتهای Gauge
-   */
-  const leftLabel =
-    `${range.min}`;
-
-  const rightLabel =
-    `${range.max}`;
-
   return `
     <svg
       width="72"
-      height="54"
-      viewBox="0 0 72 54"
+      height="48"
+      viewBox="0 0 72 48"
       aria-label="${escapeHtml(metric.title)}"
     >
-      <!-- Outer gauge -->
       <path
         d="M 11 38 A 25 25 0 0 1 61 38"
         fill="none"
@@ -1243,63 +1113,35 @@ function buildGaugeSvg(metric) {
         stroke-linecap="round"
       />
 
-      <!-- Ticks -->
       ${ticks}
 
-      <!-- Needle -->
       <line
         x1="${centerX}"
         y1="${centerY}"
-        x2="${tipX.toFixed(2)}"
-        y2="${tipY.toFixed(2)}"
+        x2="${needleX.toFixed(2)}"
+        y2="${needleY.toFixed(2)}"
         stroke="${colorVar}"
         stroke-width="2.4"
         stroke-linecap="round"
       />
 
-      <!-- Needle center -->
       <circle
         cx="${centerX}"
         cy="${centerY}"
-        r="3.5"
+        r="3.2"
         fill="${colorVar}"
       />
 
-      <!-- Value -->
       <text
         x="${centerX}"
-        y="35"
+        y="29"
         text-anchor="middle"
         fill="var(--text)"
         font-size="8"
         font-family="var(--font-mono)"
         font-weight="600"
       >
-        ${escapeHtml(String(metric.value))}
-      </text>
-
-      <!-- Min -->
-      <text
-        x="8"
-        y="50"
-        text-anchor="start"
-        fill="var(--text-faint)"
-        font-size="7"
-        font-family="var(--font-mono)"
-      >
-        ${escapeHtml(leftLabel)}
-      </text>
-
-      <!-- Max -->
-      <text
-        x="64"
-        y="50"
-        text-anchor="end"
-        fill="var(--text-faint)"
-        font-size="7"
-        font-family="var(--font-mono)"
-      >
-        ${escapeHtml(rightLabel)}
+        ${escapeHtml(String(value))}
       </text>
     </svg>
   `;

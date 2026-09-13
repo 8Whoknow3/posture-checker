@@ -14,6 +14,7 @@ FRONTEND_DIR = ROOT_DIR / "frontend"
 
 BACKEND_HOST = "127.0.0.1"
 BACKEND_PORT = 8000
+
 FRONTEND_HOST = "127.0.0.1"
 FRONTEND_PORT = 5500
 
@@ -29,19 +30,26 @@ def is_port_open(host: str, port: int) -> bool:
         return sock.connect_ex((host, port)) == 0
 
 
-def wait_for_port(host: str, port: int, timeout: float = 15.0) -> bool:
+def wait_for_port(
+    host: str,
+    port: int,
+    timeout: float = 15.0,
+) -> bool:
     """Wait until a TCP port becomes available."""
     deadline = time.monotonic() + timeout
 
     while time.monotonic() < deadline:
         if is_port_open(host, port):
             return True
+
         time.sleep(0.2)
 
     return False
 
 
-def stop_process(process: subprocess.Popen[object] | None) -> None:
+def stop_process(
+    process: subprocess.Popen[object] | None,
+) -> None:
     """Terminate a child process if it is still running."""
     if process is None or process.poll() is not None:
         return
@@ -56,7 +64,7 @@ def stop_process(process: subprocess.Popen[object] | None) -> None:
 
 
 def main() -> int:
-    """Start the backend and frontend servers and open the browser."""
+    """Start the backend and frontend servers."""
     if not BACKEND_DIR.is_dir():
         print(f"Backend directory not found: {BACKEND_DIR}")
         return 1

@@ -1,72 +1,76 @@
-# دستیار تحلیل وضعیت نشستن
+# Posture Checker
 
-یک سامانه وب مبتنی بر بینایی ماشین برای تحلیل وضعیت نشستن با استفاده از وبکم یا تصاویر آپلودشده.
+یک سامانه وب مبتنی بر **بینایی ماشین** برای تحلیل وضعیت نشستن که با استفاده از وبکم یا تصویر ورودی، وضعیت بدن را بررسی کرده و شاخص‌های مرتبط با پوسچر و سطح ریسک کلی را ارائه می‌دهد.
 
-این سامانه با استفاده از **MediaPipe Pose Landmarker** نقاط کلیدی بدن را تشخیص می‌دهد، شاخص‌های مرتبط با وضعیت بدن را محاسبه می‌کند و یک ارزیابی کلی از وضعیت نشستن ارائه می‌دهد.
+این پروژه از مدل **MediaPipe Pose Landmarker** به‌صورت محلی استفاده می‌کند. مدل در پروژه ذخیره شده و برای تشخیص نقاط بدن، محاسبه شاخص‌های وضعیت نشستن و ارزیابی ریسک مورد استفاده قرار می‌گیرد.
 
-[🇬🇧 English](README.md) | **🇮🇷 فارسی**
+**🇮🇷 فارسی** | [🇬🇧 English](README.md)
 
 ## قابلیت‌ها
 
-- تحلیل تصاویر آپلودشده
-- تحلیل تصویر ثبت‌شده با وبکم
-- تحلیل بلادرنگ وضعیت نشستن
-- پردازش زنده با WebSocket
-- تشخیص Pose با MediaPipe Pose Landmarker
-- محاسبه شاخص‌های وضعیت بدن
-- ارزیابی کلی وضعیت
-- نمایش Skeleton و نقاط Pose روی تصویر
-- REST API
-- Health Check
-- مدیریت خطا
-- تست‌های Unit و Integration
-- تست Performance برای WebSocket
+* بارگذاری تصویر و تحلیل وضعیت نشستن
+* دریافت تصویر از وبکم
+* تحلیل زنده وضعیت نشستن
+* پردازش بلادرنگ با WebSocket
+* استفاده از MediaPipe Pose Landmarker در حالت‌های `IMAGE` و `LIVE_STREAM`
+* استفاده از مدل محلی `pose_landmarker_full.task`
+* محاسبه شاخص‌های وضعیت بدن
+* محاسبه ریسک کلی وضعیت نشستن
+* نمایش تصویر Annotated همراه با نقاط و اسکلت بدن
+* تشخیص نوع نمای دوربین
+* REST API
+* Health Check
+* مدیریت خطا با Exceptionهای اختصاصی
+* تست‌های Unit و Integration
+* تست WebSocket
+* تست پایه Performance
+* جداسازی Frontend و Backend
 
-## معماری
+## معماری پروژه
 
-این پروژه از یک معماری لایه‌ای سبک استفاده می‌کند که رابط کاربری، API، منطق تحلیل وضعیت بدن، بینایی ماشین و ابزارهای کمکی را از یکدیگر جدا می‌کند.
+پروژه با یک معماری لایه‌ای سبک طراحی شده است تا رابط کاربری، API، منطق تحلیل پوسچر، تشخیص Pose و ابزارهای کمکی از یکدیگر جدا باشند.
 
 ```text
                          ┌──────────────────────────┐
                          │        Frontend          │
-                         │      HTML / CSS / JS      │
+                         │      HTML / CSS / JS     │
                          │                          │
-                         │  Upload │ Webcam │ Live │
+                         │  Upload │ Webcam │ Live  │
                          └────────────┬─────────────┘
                                       │
-                         ┌────────────┴────────────┐
-                         │                         │
+                         ┌────────────┴─────────────┐
+                         │                          │
                       HTTP/REST                WebSocket
-                         │                         │
-                         ▼                         ▼
+                         │                          │
+                         ▼                          ▼
               ┌─────────────────────┐   ┌─────────────────────┐
-              │   Analyze Route     │   │  WebSocket Route   │
-              │   POST /api/analyze │   │  /ws/posture       │
+              │    Analyze Route    │   │   WebSocket Route   │
+              │   POST /api/analyze │   │     /ws/posture     │
               └──────────┬──────────┘   └──────────┬──────────┘
                          │                         │
                          └────────────┬────────────┘
                                       ▼
                          ┌──────────────────────────┐
-                         │     PostureService       │
+                         │      PostureService      │
                          │                          │
                          │ Detection + Analysis     │
                          │ + Result Coordination    │
                          └────────────┬─────────────┘
                                       │
-                     ┌────────────────┴────────────────┐
-                     │                                 │
-                     ▼                                 ▼
-          ┌─────────────────────┐          ┌─────────────────────┐
-          │    PoseDetector     │          │   Posture Metrics   │
-          │                     │          │                     │
-          │ MediaPipe Pose      │          │ Posture calculations │
-          │ Landmarker          │          │ and risk assessment  │
-          └──────────┬──────────┘          └──────────┬──────────┘
-                     │                                 │
-                     └────────────────┬────────────────┘
+                       ┌──────────────┴──────────────┐
+                       │                             │
+                       ▼                             ▼
+              ┌─────────────────────┐    ┌─────────────────────┐
+              │    PoseDetector     │    │   Posture Metrics   │
+              │                     │    │                     │
+              │ MediaPipe Pose      │    │ محاسبه شاخص‌ها و    │
+              │ Landmarker          │    │ ارزیابی ریسک       │
+              └──────────┬──────────┘    └──────────┬──────────┘
+                         │                          │
+                         └────────────┬─────────────┘
                                       ▼
                          ┌──────────────────────────┐
-                         │   Result / Serializer    │
+                         │        Serializer        │
                          │                          │
                          │ Metrics + Overall +      │
                          │ Annotated Image          │
@@ -74,39 +78,43 @@
                                       │
                                       ▼
                          ┌──────────────────────────┐
-                         │         Frontend         │
-                         │     Rendered Results     │
+                         │        Frontend          │
+                         │     نمایش نتیجه نهایی   │
                          └──────────────────────────┘
 ```
 
-### اجزای اصلی
+## اجزای اصلی
 
-| جزء                 | مسئولیت                                                             |
-| ------------------- | ------------------------------------------------------------------- |
-| **Frontend**        | رابط کاربری، آپلود تصویر، دسترسی به وبکم، ارتباط زنده و نمایش نتایج |
-| **Analyze Route**   | پردازش درخواست‌های تحلیل تصویر                                      |
-| **WebSocket Route** | مدیریت تحلیل بلادرنگ                                                |
-| **PostureService**  | هماهنگ‌سازی تشخیص Pose، تحلیل وضعیت و تولید نتیجه                   |
-| **PoseDetector**    | ارتباط با MediaPipe Pose Landmarker در حالت‌های IMAGE و LIVE_STREAM |
-| **Posture Metrics** | محاسبه شاخص‌های وضعیت بدن و ارزیابی کلی                             |
-| **Serializer**      | تبدیل نتیجه داخلی به پاسخ مناسب برای API و WebSocket                |
-| **Utilities**       | پردازش تصویر و رسم نقاط و Skeleton                                  |
+| بخش                 | وظیفه                                                                    |
+| ------------------- | ------------------------------------------------------------------------ |
+| **Frontend**        | رابط کاربری، آپلود تصویر، دسترسی به وبکم، ارتباط WebSocket و نمایش نتایج |
+| **Analyze Route**   | دریافت و تحلیل یک تصویر از طریق REST                                     |
+| **Health Route**    | بررسی فعال بودن Backend                                                  |
+| **WebSocket Route** | دریافت فریم‌های زنده و ارسال نتیجه تحلیل                                 |
+| **PostureService**  | هماهنگ‌کردن تشخیص Pose، تحلیل پوسچر و تولید نتیجه Annotated              |
+| **PoseDetector**    | مدیریت MediaPipe Pose Landmarker در حالت‌های `IMAGE` و `LIVE_STREAM`     |
+| **Posture Metrics** | محاسبه شاخص‌های پوسچر و ریسک کلی                                         |
+| **Serializer**      | تبدیل نتایج داخلی به خروجی API و WebSocket                               |
+| **Exceptions**      | مدیریت خطاهای اختصاصی برنامه                                             |
+| **Utilities**       | پردازش تصویر و رسم Pose                                                  |
 
 ## ساختار پروژه
 
 ```text
-Finale 2/
+posture-checker/
 │
 ├── run.py
+├── README.md
+├── README_FA.md
+├── .gitignore
 │
 ├── backend/
 │   ├── app/
 │   │   ├── api/
-│   │   │   ├── routes/
+│   │   ├── │   ├── routes/
 │   │   │   │   ├── analyze.py
-│   │   │   ├── health.py
-│   │   │   └── websocket.py
-│   │   │
+│   │   │   │   ├── health.py
+│   │   │   │   └── websocket.py
 │   │   │   └── serializers/
 │   │   │       └── posture.py
 │   │   │
@@ -159,31 +167,32 @@ Finale 2/
 
 ### Backend
 
-- Python 3.11+
-- FastAPI
-- Uvicorn
-- MediaPipe
-- OpenCV
-- NumPy
-- Pillow
+* Python 3.11+
+* FastAPI
+* Uvicorn
+* MediaPipe
+* OpenCV
+* NumPy
+* Pillow
 
 ### Frontend
 
-- HTML
-- CSS
-- JavaScript
-- WebSocket API
-- MediaDevices API
+* HTML
+* CSS
+* JavaScript
+* WebSocket API
+* MediaDevices API
 
-### Testing
+### تست
 
-- Pytest
-- Pytest-Cov
-- WebSockets
+* Pytest
+* Pytest-Cov
+* WebSockets
+* HTTPX2
 
 ## پیش‌نیازها
 
-وابستگی‌های Runtime:
+### وابستگی‌های Runtime
 
 ```text
 fastapi>=0.110
@@ -195,64 +204,78 @@ pillow>=10.0
 numpy>=1.26,<2.0
 ```
 
-وابستگی‌های توسعه و تست:
+### وابستگی‌های توسعه و تست
 
 ```text
 -r requirements.txt
-
 pytest>=9.0
 pytest-cov>=7.0
 websockets>=15.0
+httpx2>=0.2
 ```
 
 ## نصب
 
-Repository را دریافت کنید:
+ابتدا repository را Clone کنید:
 
 ```bash
 git clone https://github.com/8Whoknow3/posture-checker.git
 cd posture-checker
 ```
 
-ساخت محیط Python:
+یک محیط Python 3.11 ایجاد کنید:
 
 ```powershell
 conda create -n posture-web python=3.11
 conda activate posture-web
 ```
 
-نصب وابستگی‌ها:
+سپس dependencyهای پروژه را نصب کنید:
 
 ```powershell
 cd backend
 python -m pip install -r requirements-dev.txt
 ```
 
+## مدل محلی Pose
+
+مدل MediaPipe Pose Landmarker به‌صورت محلی در مسیر زیر قرار دارد:
+
+```text
+backend/models/pose_landmarker_full.task
+```
+
+برنامه مدل را مستقیماً از فایل محلی بارگذاری می‌کند؛ بنابراین برای انجام inference به یک API آنلاین نیاز ندارد.
+
+MediaPipe به‌عنوان runtime برای اجرای مدل و دریافت Pose Landmarks مورد استفاده قرار می‌گیرد.
+
 ## اجرای پروژه
 
-از ریشه پروژه:
+از ریشه پروژه اجرا کنید:
 
 ```powershell
 python run.py
 ```
 
-آدرس‌ها:
+فایل `run.py` به‌صورت خودکار Backend و Frontend را اجرا می‌کند.
+
+### آدرس‌های پروژه
 
 ```text
-Frontend: http://127.0.0.1:5500
-Backend:  http://127.0.0.1:8000
-Swagger:  http://127.0.0.1:8000/docs
+Frontend : http://127.0.0.1:5500
+Backend  : http://127.0.0.1:8000
+Swagger  : http://127.0.0.1:8000/docs
 ```
 
-## API
+## بررسی سلامت Backend
 
-### Health Check
+برای بررسی فعال بودن Backend:
 
-```http
-GET /api/health
+```text
+http://127.0.0.1:8000/api/health
 ```
 
-پاسخ:
+خروجی مورد انتظار:
 
 ```json
 {
@@ -260,23 +283,39 @@ GET /api/health
 }
 ```
 
+## API
+
+### REST Endpoints
+
+| متد    | Endpoint       | توضیح                   |
+| ------ | -------------- | ----------------------- |
+| `GET`  | `/api/health`  | بررسی فعال بودن Backend |
+| `POST` | `/api/analyze` | تحلیل یک تصویر ورودی    |
+
 ### تحلیل تصویر
 
 ```http
 POST /api/analyze
 ```
 
-پارامتر تصویر با `multipart/form-data` ارسال می‌شود.
+این Endpoint یک تصویر را از طریق `multipart/form-data` دریافت می‌کند.
 
-### WebSocket
+در صورت موفقیت، اطلاعات زیر برگردانده می‌شوند:
+
+* `annotated_image`
+* `view_label`
+* `metrics`
+* `overall`
+
+### تحلیل زنده با WebSocket
 
 ```text
-/ws/posture
+ws://127.0.0.1:8000/ws/posture
 ```
 
-در این مسیر، فریم‌های JPEG به صورت Binary ارسال می‌شوند.
+در حالت Live، مرورگر فریم‌ها را به‌صورت Binary JPEG از طریق WebSocket ارسال می‌کند.
 
-پاسخ موفق:
+نمونه پاسخ موفق:
 
 ```json
 {
@@ -289,7 +328,7 @@ POST /api/analyze
 }
 ```
 
-پاسخ خطا:
+نمونه پاسخ خطا:
 
 ```json
 {
@@ -298,53 +337,141 @@ POST /api/analyze
 }
 ```
 
-## تحلیل وضعیت بدن
+## شاخص‌های وضعیت نشستن
 
-سیستم چند شاخص مرتبط با وضعیت بدن را محاسبه کرده و آنها را در سطوح مختلف نمایش می‌دهد.
+در نسخه فعلی پنج شاخص مرتبط با وضعیت نشستن بررسی می‌شوند.
 
-هر Metric شامل اطلاعاتی مانند:
+### Tier 1
+
+* **Craniovertebral Angle (CVA)**
+* **Trunk Flexion**
+* **Spine Alignment**
+
+### Tier 2
+
+* **Head Tilt**
+* **Trunk Lateral**
+
+### نمای جانبی
+
+در تصاویر گرفته‌شده از **نمای جانبی (Side View)**، دو شاخص زیر به‌عنوان غیرقابل‌سنجش گزارش می‌شوند:
 
 ```text
-key
-title
-tier
-value
-unit
-status
-status_label
-reference
-tip
-convention_note
+Head Tilt
+Trunk Lateral
 ```
 
-همچنین یک ارزیابی کلی برای وضعیت تولید می‌شود.
+دلیل این موضوع آن است که اطلاعات مورد نیاز برای ارزیابی قابل اعتماد این دو شاخص در نمای جانبی در دسترس نیست.
 
-این ارزیابی برای اهداف تحلیلی و آموزشی این پروژه است و جایگزین ارزیابی پزشکی یا فیزیوتراپی نیست.
+نمونه خروجی:
 
-## تست‌ها
+```json
+{
+  "key": "head_tilt",
+  "value": null,
+  "status": "unavailable",
+  "status_label": "قابل سنجش نیست"
+}
+```
 
-اجرای کل تست‌ها:
+شاخص‌هایی که مقدار `unavailable` دارند، در محاسبه ریسک کلی جریمه نمی‌شوند.
+
+## حالت‌های پردازش MediaPipe
+
+### `IMAGE`
+
+حالت `IMAGE` برای تحلیل تصاویر ثابت و درخواست‌های REST استفاده می‌شود.
+
+```text
+Image
+  ↓
+REST API
+  ↓
+PoseDetector
+  ↓
+MediaPipe IMAGE
+  ↓
+Posture Metrics
+  ↓
+Result
+```
+
+### `LIVE_STREAM`
+
+حالت `LIVE_STREAM` برای تحلیل Real-Time از طریق WebSocket استفاده می‌شود.
+
+```text
+Camera
+  ↓
+WebSocket
+  ↓
+PoseDetector
+  ↓
+MediaPipe LIVE_STREAM
+  ↓
+Posture Metrics
+  ↓
+Result
+  ↓
+WebSocket
+  ↓
+Frontend
+```
+
+هر WebSocket Session یک `LIVE_STREAM` detector مستقل ایجاد می‌کند. این طراحی باعث می‌شود Sessionها از یکدیگر جدا بمانند و Timestampهای MediaPipe به‌صورت monotonically increasing تولید شوند.
+
+## تست
+
+برای اجرای تمام تست‌ها:
 
 ```powershell
 cd backend
 pytest -q
 ```
 
-تست WebSocket:
+برای اجرای تست‌های بخش‌های مختلف:
 
 ```powershell
+pytest tests/test_pose_detector.py -v
+pytest tests/test_posture_metrics.py -v
+pytest tests/test_posture_service.py -v
+pytest tests/test_analyze.py -v
 pytest tests/test_websocket.py -v
 ```
 
-تست Performance:
+برای اجرای تست Performance:
 
 ```powershell
 pytest tests/test_websocket_performance.py -s -v
 ```
 
+## وضعیت تست
+
+مجموعه تست فعلی پروژه با موفقیت اجرا شده است:
+
+```text
+32 passed
+```
+
+تست‌ها بخش‌های زیر را پوشش می‌دهند:
+
+* Image Utilities
+* Drawing
+* Pose Detection
+* `IMAGE` mode
+* `LIVE_STREAM` mode
+* Posture Metrics
+* Posture Service
+* Serializer
+* REST API
+* Health API
+* WebSocket API
+* مدیریت خطا
+* Performance Baseline
+
 ## Performance
 
-در یک تست توسعه با ۲۰ فریم، نتیجه زیر به دست آمده است:
+تست WebSocket با ۲۰ فریم در محیط توسعه به نتایج زیر رسیده است:
 
 ```text
 Frames requested : 20
@@ -353,8 +480,103 @@ Average latency  : 52.8 ms
 Approx. FPS      : 18.95
 ```
 
-نتایج Performance به سخت‌افزار، دوربین و شرایط اجرای سیستم وابسته هستند.
+در تست مرورگر نیز تقریباً:
 
-## License
+```text
+Latency : ~24 ms
+FPS     : ~13
+```
 
-This project was developed for educational and university purposes.
+این اعداد مربوط به محیط توسعه هستند و ممکن است با توجه به مشخصات سخت‌افزار، رزولوشن وبکم، مرورگر و شرایط اجرای برنامه تغییر کنند.
+
+## اجرای ساده با `run.py`
+
+برای ساده‌تر شدن اجرای پروژه، فایل `run.py` مراحل راه‌اندازی را به‌صورت خودکار انجام می‌دهد:
+
+```text
+Backend
+   ↓
+صبر برای آماده شدن Backend
+   ↓
+Frontend
+   ↓
+صبر برای آماده شدن Frontend
+   ↓
+باز کردن مرورگر
+```
+
+برای متوقف کردن برنامه کافی است:
+
+```text
+Ctrl + C
+```
+
+را فشار دهید.
+
+## نکات توسعه
+
+ساختار پروژه به‌گونه‌ای طراحی شده است که منطق تشخیص Pose، محاسبه شاخص‌ها، سرویس تحلیل، API و رابط کاربری از یکدیگر جدا باشند.
+
+### جریان تحلیل تصویر ثابت
+
+```text
+Image
+  ↓
+REST
+  ↓
+PostureService
+  ↓
+PoseDetector
+  ↓
+MediaPipe IMAGE
+  ↓
+Posture Metrics
+  ↓
+Result
+```
+
+### جریان تحلیل Real-Time
+
+```text
+Camera
+  ↓
+WebSocket
+  ↓
+PoseDetector
+  ↓
+MediaPipe LIVE_STREAM
+  ↓
+Posture Metrics
+  ↓
+Result
+  ↓
+WebSocket
+  ↓
+Frontend
+```
+
+## وضعیت فعلی پروژه
+
+بخش فنی اصلی پروژه در حال حاضر تکمیل شده است:
+
+```text
+✅ Backend
+✅ Frontend
+✅ REST API
+✅ WebSocket
+✅ MediaPipe Pose Landmarker
+✅ IMAGE / LIVE_STREAM
+✅ Posture Metrics
+✅ Error Handling
+✅ Local Model
+✅ Automated Tests
+✅ Performance Baseline
+✅ Code Audit
+✅ Clean Install
+```
+
+قابلیت‌هایی مانند Database و بهینه‌سازی‌های بیشتر Performance در نسخه فعلی جزو محدوده اصلی پروژه نیستند.
+
+## هدف پروژه
+
+این پروژه با هدف آموزشی و دانشگاهی توسعه یافته است و تمرکز آن بر استفاده عملی از **بینایی ماشین** برای تحلیل وضعیت نشستن، ارتباط بلادرنگ با **WebSocket** و طراحی یک معماری جداشده بین **Frontend و Backend** است.
