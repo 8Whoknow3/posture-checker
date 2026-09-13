@@ -183,6 +183,74 @@ def test_compute_overall_risk():
     assert result["caution_count"] == 0
 
 
+def test_unavailable_metrics_do_not_increase_overall_risk():
+    metrics = [
+        Metric(
+            key="cva",
+            title="CVA",
+            tier=1,
+            value=55.0,
+            unit="درجه",
+            status="good",
+            status_label="مطلوب",
+            reference="test",
+            tip="test",
+        ),
+        Metric(
+            key="trunk",
+            title="Trunk",
+            tier=1,
+            value=10.0,
+            unit="درجه",
+            status="good",
+            status_label="مطلوب",
+            reference="test",
+            tip="test",
+        ),
+        Metric(
+            key="spine_align",
+            title="Spine",
+            tier=1,
+            value=170.0,
+            unit="درجه",
+            status="good",
+            status_label="مطلوب",
+            reference="test",
+            tip="test",
+        ),
+        Metric(
+            key="head_tilt",
+            title="Head Tilt",
+            tier=2,
+            value=None,
+            unit="درجه",
+            status="unavailable",
+            status_label="قابل سنجش نیست",
+            reference="test",
+            tip="test",
+        ),
+        Metric(
+            key="trunk_lateral",
+            title="Trunk Lateral",
+            tier=2,
+            value=None,
+            unit="درجه",
+            status="unavailable",
+            status_label="قابل سنجش نیست",
+            reference="test",
+            tip="test",
+        ),
+    ]
+
+    result = compute_overall_risk(metrics)
+
+    assert result["score"] == 3
+    assert result["max_score"] == 11
+    assert result["level"] == "low"
+    assert result["poor_count"] == 0
+    assert result["caution_count"] == 0
+
+
 # ============================================================
 # Real MediaPipe + Posture Analysis
 # ============================================================
@@ -243,11 +311,36 @@ def test_analyze_posture_with_real_pose():
                 "good",
                 "caution",
                 "poor",
+                "unavailable",
             }
 
             assert metric.status_label
             assert metric.title
             assert metric.unit
+
+        if analysis["view_label"] == "از پهلو (نیم‌رخ)":
+            metrics_by_key = {
+                metric.key: metric
+                for metric in analysis["metrics"]
+            }
+
+            assert (
+                metrics_by_key["head_tilt"].status
+                == "unavailable"
+            )
+            assert (
+                metrics_by_key["head_tilt"].value
+                is None
+            )
+
+            assert (
+                metrics_by_key["trunk_lateral"].status
+                == "unavailable"
+            )
+            assert (
+                metrics_by_key["trunk_lateral"].value
+                is None
+            )
 
         overall = analysis["overall"]
 

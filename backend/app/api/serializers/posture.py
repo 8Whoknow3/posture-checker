@@ -18,9 +18,10 @@ def serialize_analysis(
             "key": metric.key,
             "title": metric.title,
             "tier": metric.tier,
-            "value": round(
-                metric.value,
-                1,
+            "value": (
+                round(metric.value, 1)
+                if metric.value is not None
+                else None
             ),
             "unit": metric.unit,
             "status": metric.status,

@@ -35,6 +35,7 @@ STATUS_LABELS = {
     "good": "مطلوب",
     "caution": "نیازمند توجه",
     "poor": "پرخطر",
+    "unavailable": "قابل سنجش نیست",
 }
 
 
@@ -43,7 +44,7 @@ class Metric:
     key: str
     title: str
     tier: int
-    value: float
+    value: Optional[float]
     unit: str
     status: str
     status_label: str
@@ -59,15 +60,25 @@ def to_xyz(landmark) -> np.ndarray:
     )
 
 
-def to_px(landmark, width: int, height: int) -> tuple[float, float]:
+def to_px(
+    landmark,
+    width: int,
+    height: int,
+) -> tuple[float, float]:
     return (
         landmark.x * width,
         landmark.y * height,
     )
 
 
-def weighted_midpoint(points, weights) -> np.ndarray:
-    weights = np.asarray(weights, dtype=float)
+def weighted_midpoint(
+    points,
+    weights,
+) -> np.ndarray:
+    weights = np.asarray(
+        weights,
+        dtype=float,
+    )
 
     if weights.sum() <= 1e-6:
         weights = np.ones_like(weights)
@@ -81,7 +92,10 @@ def weighted_midpoint(points, weights) -> np.ndarray:
     )
 
 
-def angle_between(v1: np.ndarray, v2: np.ndarray) -> float:
+def angle_between(
+    v1: np.ndarray,
+    v2: np.ndarray,
+) -> float:
     norm1 = np.linalg.norm(v1)
     norm2 = np.linalg.norm(v2)
 
@@ -94,29 +108,86 @@ def angle_between(v1: np.ndarray, v2: np.ndarray) -> float:
         1.0,
     )
 
-    return math.degrees(math.acos(cosine))
+    return math.degrees(
+        math.acos(cosine)
+    )
 
 
-def line_angle(line: np.ndarray, reference: np.ndarray) -> float:
-    angle = angle_between(line, reference)
-    return min(angle, 180.0 - angle)
+def line_angle(
+    line: np.ndarray,
+    reference: np.ndarray,
+) -> float:
+    angle = angle_between(
+        line,
+        reference,
+    )
+
+    return min(
+        angle,
+        180.0 - angle,
+    )
 
 
-def estimate_camera_view(landmarks_2d) -> str:
+def angle_2d(
+    left_landmark,
+    right_landmark,
+) -> float:
+    """Calculate the smaller angle of a 2D line relative to horizontal."""
+
+    dx = (
+        right_landmark.x -
+        left_landmark.x
+    )
+
+    dy = (
+        right_landmark.y -
+        left_landmark.y
+    )
+
+    if (
+        abs(dx) < 1e-9
+        and abs(dy) < 1e-9
+    ):
+        return 0.0
+
+    angle = abs(
+        math.degrees(
+            math.atan2(
+                dy,
+                dx,
+            )
+        )
+    )
+
+    if angle > 90.0:
+        angle = 180.0 - angle
+
+    return angle
+
+
+def estimate_camera_view(
+    landmarks_2d,
+) -> str:
     left_shoulder = landmarks_2d[
         LANDMARK_NAMES["left_shoulder"]
     ]
+
     right_shoulder = landmarks_2d[
         LANDMARK_NAMES["right_shoulder"]
     ]
 
     dz = abs(
-        left_shoulder.z - right_shoulder.z
+        left_shoulder.z -
+        right_shoulder.z
     )
 
-    dx = abs(
-        left_shoulder.x - right_shoulder.x
-    ) + 1e-6
+    dx = (
+        abs(
+            left_shoulder.x -
+            right_shoulder.x
+        )
+        + 1e-6
+    )
 
     ratio = dz / dx
 
@@ -168,12 +239,18 @@ def analyze_posture(
             )
         )
 
-    left_ear = lm2d[LANDMARK_NAMES["left_ear"]]
-    right_ear = lm2d[LANDMARK_NAMES["right_ear"]]
+    left_ear = lm2d[
+        LANDMARK_NAMES["left_ear"]
+    ]
+
+    right_ear = lm2d[
+        LANDMARK_NAMES["right_ear"]
+    ]
 
     left_shoulder = lm2d[
         LANDMARK_NAMES["left_shoulder"]
     ]
+
     right_shoulder = lm2d[
         LANDMARK_NAMES["right_shoulder"]
     ]
@@ -181,14 +258,32 @@ def analyze_posture(
     left_hip = lm2d[
         LANDMARK_NAMES["left_hip"]
     ]
+
     right_hip = lm2d[
         LANDMARK_NAMES["right_hip"]
     ]
 
+    camera_view = estimate_camera_view(
+        lm2d
+    )
+
+    side_view = (
+        camera_view ==
+        "از پهلو (نیم‌رخ)"
+    )
+
     ear_center = weighted_midpoint(
         [
-            to_xyz(lm3d[LANDMARK_NAMES["left_ear"]]),
-            to_xyz(lm3d[LANDMARK_NAMES["right_ear"]]),
+            to_xyz(
+                lm3d[
+                    LANDMARK_NAMES["left_ear"]
+                ]
+            ),
+            to_xyz(
+                lm3d[
+                    LANDMARK_NAMES["right_ear"]
+                ]
+            ),
         ],
         [
             visibility("left_ear"),
@@ -199,10 +294,14 @@ def analyze_posture(
     shoulder_center = weighted_midpoint(
         [
             to_xyz(
-                lm3d[LANDMARK_NAMES["left_shoulder"]]
+                lm3d[
+                    LANDMARK_NAMES["left_shoulder"]
+                ]
             ),
             to_xyz(
-                lm3d[LANDMARK_NAMES["right_shoulder"]]
+                lm3d[
+                    LANDMARK_NAMES["right_shoulder"]
+                ]
             ),
         ],
         [
@@ -213,8 +312,16 @@ def analyze_posture(
 
     hip_center = weighted_midpoint(
         [
-            to_xyz(lm3d[LANDMARK_NAMES["left_hip"]]),
-            to_xyz(lm3d[LANDMARK_NAMES["right_hip"]]),
+            to_xyz(
+                lm3d[
+                    LANDMARK_NAMES["left_hip"]
+                ]
+            ),
+            to_xyz(
+                lm3d[
+                    LANDMARK_NAMES["right_hip"]
+                ]
+            ),
         ],
         [
             visibility("left_hip"),
@@ -232,8 +339,15 @@ def analyze_posture(
         dtype=float,
     )
 
+    # ========================================================
+    # Tier 1
+    # ========================================================
+
     # 1. CVA
-    neck_vector = ear_center - shoulder_center
+    neck_vector = (
+        ear_center -
+        shoulder_center
+    )
 
     neck_angle = angle_between(
         neck_vector,
@@ -250,7 +364,10 @@ def analyze_posture(
     )
 
     # 2. Trunk flexion
-    trunk_vector = shoulder_center - hip_center
+    trunk_vector = (
+        shoulder_center -
+        hip_center
+    )
 
     trunk_flexion = angle_between(
         trunk_vector,
@@ -265,8 +382,15 @@ def analyze_posture(
     )
 
     # 3. Spine alignment
-    vector1 = ear_center - shoulder_center
-    vector2 = hip_center - shoulder_center
+    vector1 = (
+        ear_center -
+        shoulder_center
+    )
+
+    vector2 = (
+        hip_center -
+        shoulder_center
+    )
 
     spine_alignment = angle_between(
         vector1,
@@ -280,45 +404,53 @@ def analyze_posture(
         True,
     )
 
+    # ========================================================
+    # Tier 2
+    # ========================================================
+
     # 4. Head tilt
-    left_ear_3d = to_xyz(
-        lm3d[LANDMARK_NAMES["left_ear"]]
-    )
-    right_ear_3d = to_xyz(
-        lm3d[LANDMARK_NAMES["right_ear"]]
-    )
+    if side_view:
+        head_tilt = None
+        head_tilt_status = "unavailable"
 
-    head_tilt = line_angle(
-        left_ear_3d - right_ear_3d,
-        horizontal,
-    )
+    else:
+        head_tilt = angle_2d(
+            left_ear,
+            right_ear,
+        )
 
-    head_tilt_status = status_from_thresholds(
-        head_tilt,
-        HEAD_TILT_CAUTION_DEG * 2,
-        HEAD_TILT_CAUTION_DEG,
-        False,
-    )
+        head_tilt_status = (
+            status_from_thresholds(
+                head_tilt,
+                HEAD_TILT_CAUTION_DEG * 2,
+                HEAD_TILT_CAUTION_DEG,
+                False,
+            )
+        )
 
     # 5. Trunk lateral
-    left_shoulder_3d = to_xyz(
-        lm3d[LANDMARK_NAMES["left_shoulder"]]
-    )
-    right_shoulder_3d = to_xyz(
-        lm3d[LANDMARK_NAMES["right_shoulder"]]
-    )
+    if side_view:
+        trunk_lateral = None
+        trunk_lateral_status = "unavailable"
 
-    trunk_lateral = line_angle(
-        left_shoulder_3d - right_shoulder_3d,
-        horizontal,
-    )
+    else:
+        trunk_lateral = angle_2d(
+            left_shoulder,
+            right_shoulder,
+        )
 
-    trunk_lateral_status = status_from_thresholds(
-        trunk_lateral,
-        TRUNK_LATERAL_CAUTION_DEG * 2,
-        TRUNK_LATERAL_CAUTION_DEG,
-        False,
-    )
+        trunk_lateral_status = (
+            status_from_thresholds(
+                trunk_lateral,
+                TRUNK_LATERAL_CAUTION_DEG * 2,
+                TRUNK_LATERAL_CAUTION_DEG,
+                False,
+            )
+        )
+
+    # ========================================================
+    # Metrics
+    # ========================================================
 
     metrics = [
         Metric(
@@ -362,8 +494,12 @@ def analyze_posture(
             value=head_tilt,
             unit="درجه",
             status=head_tilt_status,
-            status_label=STATUS_LABELS[head_tilt_status],
-            reference="RULA / REBA",
+            status_label=STATUS_LABELS[
+                head_tilt_status
+            ],
+            reference=(
+                "قابل ارزیابی در نمای روبه‌رو یا زاویه‌دار"
+            ),
             tip="سر را در راستای عمود بدن نگه دارید.",
         ),
         Metric(
@@ -373,38 +509,70 @@ def analyze_posture(
             value=trunk_lateral,
             unit="درجه",
             status=trunk_lateral_status,
-            status_label=STATUS_LABELS[trunk_lateral_status],
-            reference="RULA / REBA",
+            status_label=STATUS_LABELS[
+                trunk_lateral_status
+            ],
+            reference=(
+                "قابل ارزیابی در نمای روبه‌رو یا زاویه‌دار"
+            ),
             tip="وزن بدن را یکنواخت توزیع کنید.",
         ),
     ]
 
-    # Points used for overlay
-    ear = left_ear if visibility("left_ear") >= visibility("right_ear") else right_ear
+    # ========================================================
+    # Overlay points
+    # ========================================================
+
+    ear = (
+        left_ear
+        if visibility("left_ear")
+        >= visibility("right_ear")
+        else right_ear
+    )
+
     shoulder = (
         left_shoulder
-        if visibility("left_shoulder") >= visibility("right_shoulder")
+        if visibility("left_shoulder")
+        >= visibility("right_shoulder")
         else right_shoulder
     )
+
     hip = (
         left_hip
-        if visibility("left_hip") >= visibility("right_hip")
+        if visibility("left_hip")
+        >= visibility("right_hip")
         else right_hip
     )
 
     return {
-        "view_label": estimate_camera_view(lm2d),
+        "view_label": camera_view,
         "points": {
-            "ear": to_px(ear, width, height),
-            "shoulder": to_px(shoulder, width, height),
-            "hip": to_px(hip, width, height),
+            "ear": to_px(
+                ear,
+                width,
+                height,
+            ),
+            "shoulder": to_px(
+                shoulder,
+                width,
+                height,
+            ),
+            "hip": to_px(
+                hip,
+                width,
+                height,
+            ),
         },
         "metrics": metrics,
-        "overall": compute_overall_risk(metrics),
+        "overall": compute_overall_risk(
+            metrics
+        ),
     }
 
 
-def compute_overall_risk(metrics):
+def compute_overall_risk(
+    metrics,
+):
     score_map = {
         "good": 1,
         "caution": 2,
@@ -432,18 +600,27 @@ def compute_overall_risk(metrics):
 
     if (
         tier2.get("head_tilt")
-        and tier2["head_tilt"].status != "good"
+        and tier2["head_tilt"].status
+        in {"caution", "poor"}
     ):
         adjustment += 1
 
     if (
         tier2.get("trunk_lateral")
-        and tier2["trunk_lateral"].status != "good"
+        and tier2["trunk_lateral"].status
+        in {"caution", "poor"}
     ):
         adjustment += 1
 
-    total = base_score + adjustment
-    max_score = len(tier1) * 3 + 2
+    total = (
+        base_score +
+        adjustment
+    )
+
+    max_score = (
+        len(tier1) * 3 +
+        2
+    )
 
     if total <= max_score * 0.4:
         level = "low"
