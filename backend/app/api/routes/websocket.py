@@ -1,54 +1,82 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import time
 from typing import Any
 
 import cv2
-import mediapipe as mp
 import numpy as np
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from mediapipe.tasks.python.vision import PoseLandmarkerResult
 
-from app.api.serializers.posture import (
-    serialize_posture_result,
-)
 from app.services.posture_service import PostureService
 
 
-router = APIRouter(
-    tags=["WebSocket"],
-)
+router = APIRouter(tags=["WebSocket"])
 
 
-LiveResult = tuple[
-    PoseLandmarkerResult,
-    np.ndarray,
-    int,
-]
+def build_posture_response(
+    service: PostureService,
+    frame: np.ndarray,
+    result: Any,
+) -> dict[str, Any]:
+    """Build the response payload from a MediaPipe result."""
 
-
-async def send_error(
-    websocket: WebSocket,
-    message: str,
-) -> None:
-    """Send a standardized WebSocket error response."""
-
-    await websocket.send_json(
-        {
-            "type": "error",
-            "error": message,
-        }
+    analysis_result = service.analyze_landmarks(
+        frame,
+        result.pose_landmarks[0],
+        result.pose_world_landmarks[0],
     )
 
+    success, buffer = cv2.imencode(
+        ".jpg",
+        analysis_result["annotated_image"],
+        [cv2.IMWRITE_JPEG_QUALITY, 80],
+    )
 
-def decode_frame(
-    frame_bytes: bytes,
-) -> np.ndarray | None:
-    """Decode JPEG bytes into a BGR OpenCV frame."""
+    if not success:
+        raise ValueError("Failed to encode output image.")
 
-    if not frame_bytes:
-        return None
+    image_base64 = base64.b64encode(
+        buffer.tobytes()
+    ).decode("utf-8")
+
+    analysis = analysis_result["analysis"]
+
+    metrics = [
+        {
+            "key": metric.key,
+            "title": metric.title,
+            "tier": metric.tier,
+            "value": (
+                round(metric.value, 1)
+                if metric.value is not None
+                else None
+            ),
+            "unit": metric.unit,
+            "status": metric.status,
+            "status_label": metric.status_label,
+            "reference": metric.reference,
+            "tip": metric.tip,
+            "convention_note": metric.convention_note,
+        }
+        for metric in analysis["metrics"]
+    ]
+
+    return {
+        "type": "posture_result",
+        "annotated_image": (
+            "data:image/jpeg;base64,"
+            f"{image_base64}"
+        ),
+        "view_label": analysis["view_label"],
+        "metrics": metrics,
+        "overall": analysis["overall"],
+    }
+
+
+def decode_frame(frame_bytes: bytes) -> np.ndarray | None:
+    """Decode JPEG bytes into an OpenCV BGR frame."""
 
     frame_array = np.frombuffer(
         frame_bytes,
@@ -64,7 +92,7 @@ def decode_frame(
 def create_timestamp(
     previous_timestamp: int,
 ) -> int:
-    """Create a strictly increasing MediaPipe timestamp."""
+    """Create a strictly increasing timestamp in milliseconds."""
 
     current_timestamp = (
         time.monotonic_ns() // 1_000_000
@@ -78,15 +106,13 @@ def create_timestamp(
 
 def create_live_callback(
     loop: asyncio.AbstractEventLoop,
-    result_queue: asyncio.Queue[
-        LiveResult | Exception
-    ],
+    result_queue: asyncio.Queue,
 ):
     """Create the callback used by MediaPipe LIVE_STREAM."""
 
-    def live_callback(
-        result: PoseLandmarkerResult,
-        image: mp.Image,
+    def callback(
+        result,
+        image,
         timestamp_ms: int,
     ) -> None:
         try:
@@ -114,64 +140,35 @@ def create_live_callback(
                 exc,
             )
 
-    return live_callback
+    return callback
+
+
+async def send_error(
+    websocket: WebSocket,
+    message: str,
+) -> None:
+    """Send a standardized WebSocket error response."""
+
+    await websocket.send_json(
+        {
+            "type": "error",
+            "error": message,
+        }
+    )
 
 
 async def get_live_result(
-    result_queue: asyncio.Queue[
-        LiveResult | Exception
-    ],
-    timeout: float = 1.0,
-) -> LiveResult | Exception | None:
-    """Wait for the next MediaPipe LIVE_STREAM result."""
+    result_queue: asyncio.Queue,
+):
+    """Wait for a LIVE_STREAM result."""
 
     try:
         return await asyncio.wait_for(
             result_queue.get(),
-            timeout=timeout,
+            timeout=1.0,
         )
-
     except asyncio.TimeoutError:
         return None
-
-
-def has_pose(
-    result: PoseLandmarkerResult,
-) -> bool:
-    """Return whether both required landmark sets are available."""
-
-    return bool(
-        result.pose_landmarks
-        and result.pose_world_landmarks
-    )
-
-
-def build_posture_response(
-    service: PostureService,
-    frame: np.ndarray,
-    result: PoseLandmarkerResult,
-    timestamp_ms: int,
-) -> dict[str, Any]:
-    """Build the final WebSocket posture response."""
-
-    analysis_result = service.analyze_landmarks(
-        frame,
-        result.pose_landmarks[0],
-        result.pose_world_landmarks[0],
-    )
-
-    response = serialize_posture_result(
-        analysis=analysis_result["analysis"],
-        annotated_image=analysis_result[
-            "annotated_image"
-        ],
-        quality=80,
-    )
-
-    response["type"] = "posture_result"
-    response["timestamp_ms"] = timestamp_ms
-
-    return response
 
 
 @router.websocket("/ws/posture")
@@ -187,11 +184,9 @@ async def posture_websocket(
     )
 
     shared_detector = service.detector
-    loop = asyncio.get_running_loop()
 
-    result_queue: asyncio.Queue[
-        LiveResult | Exception
-    ] = asyncio.Queue()
+    loop = asyncio.get_running_loop()
+    result_queue: asyncio.Queue = asyncio.Queue()
 
     live_callback = create_live_callback(
         loop,
@@ -204,13 +199,16 @@ async def posture_websocket(
         )
     )
 
-    last_timestamp_ms = 0
+    last_timestamp = 0
 
     try:
         while True:
             frame_bytes = (
                 await websocket.receive_bytes()
             )
+
+            if not frame_bytes:
+                continue
 
             frame = decode_frame(
                 frame_bytes
@@ -223,9 +221,11 @@ async def posture_websocket(
                 )
                 continue
 
-            last_timestamp_ms = create_timestamp(
-                last_timestamp_ms
+            timestamp_ms = create_timestamp(
+                last_timestamp
             )
+
+            last_timestamp = timestamp_ms
 
             mp_image = (
                 shared_detector.frame_to_mp_image(
@@ -236,7 +236,7 @@ async def posture_websocket(
             try:
                 live_detector.detect_async(
                     mp_image,
-                    last_timestamp_ms,
+                    timestamp_ms,
                 )
 
             except ValueError as exc:
@@ -246,30 +246,26 @@ async def posture_websocket(
                 )
                 continue
 
-            live_result = await get_live_result(
+            item = await get_live_result(
                 result_queue
             )
 
-            if live_result is None:
+            if item is None:
                 continue
 
-            if isinstance(
-                live_result,
-                Exception,
-            ):
+            if isinstance(item, Exception):
                 await send_error(
                     websocket,
-                    str(live_result),
+                    str(item),
                 )
                 continue
 
-            (
-                result,
-                processed_frame,
-                result_timestamp,
-            ) = live_result
+            result, processed_frame, result_timestamp = item
 
-            if not has_pose(result):
+            if (
+                not result.pose_landmarks
+                or not result.pose_world_landmarks
+            ):
                 await send_error(
                     websocket,
                     "No person detected.",
@@ -281,7 +277,10 @@ async def posture_websocket(
                     service,
                     processed_frame,
                     result,
-                    result_timestamp,
+                )
+
+                response["timestamp_ms"] = (
+                    result_timestamp
                 )
 
                 await websocket.send_json(

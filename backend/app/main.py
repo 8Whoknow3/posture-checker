@@ -13,12 +13,8 @@ from app.vision.pose_detector import PoseDetector
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application startup and shutdown resources."""
-
     detector = PoseDetector()
-
-    app.state.posture_service = PostureService(
-        detector
-    )
+    app.state.posture_service = PostureService(detector)
 
     try:
         yield
@@ -44,14 +40,6 @@ app.add_middleware(
 )
 
 
-app.include_router(
-    analyze_router
-)
-
-app.include_router(
-    health_router
-)
-
-app.include_router(
-    websocket_router
-)
+app.include_router(analyze_router)
+app.include_router(health_router)
+app.include_router(websocket_router)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import cv2
 from mediapipe.tasks.python.vision import PoseLandmarksConnections
 
@@ -11,6 +13,8 @@ STATUS_COLORS = {
 NEUTRAL_COLOR = (210, 170, 60)
 HIGHLIGHT_COLOR = (255, 255, 255)
 
+BASE_SIZE = 640.0
+
 
 def draw_pose_overlay(
     image_bgr,
@@ -21,8 +25,32 @@ def draw_pose_overlay(
     """Draw pose landmarks and analysis points on an image."""
 
     height, width = image_bgr.shape[:2]
-
     overlay = image_bgr.copy()
+
+    scale = min(
+        width,
+        height,
+    ) / BASE_SIZE
+
+    line_thickness = max(
+        1,
+        round(2 * scale),
+    )
+
+    landmark_radius = max(
+        2,
+        round(5 * scale),
+    )
+
+    highlight_radius = max(
+        3,
+        round(6 * scale),
+    )
+
+    highlight_thickness = max(
+        1,
+        round(2 * scale),
+    )
 
     line_color = STATUS_COLORS.get(
         overall_status,
@@ -48,7 +76,7 @@ def draw_pose_overlay(
             point_a_px,
             point_b_px,
             line_color,
-            3,
+            line_thickness,
             cv2.LINE_AA,
         )
 
@@ -61,7 +89,7 @@ def draw_pose_overlay(
         cv2.circle(
             overlay,
             point_px,
-            5,
+            landmark_radius,
             NEUTRAL_COLOR,
             -1,
             cv2.LINE_AA,
@@ -70,22 +98,24 @@ def draw_pose_overlay(
         cv2.circle(
             overlay,
             point_px,
-            5,
+            landmark_radius,
             HIGHLIGHT_COLOR,
-            1,
+            highlight_thickness,
             cv2.LINE_AA,
         )
 
     for point in points.values():
+        point_px = (
+            int(point[0]),
+            int(point[1]),
+        )
+
         cv2.circle(
             overlay,
-            (
-                int(point[0]),
-                int(point[1]),
-            ),
-            9,
+            point_px,
+            highlight_radius,
             HIGHLIGHT_COLOR,
-            2,
+            highlight_thickness,
             cv2.LINE_AA,
         )
 

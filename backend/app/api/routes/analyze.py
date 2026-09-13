@@ -2,17 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    File,
-    UploadFile,
-)
+from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import JSONResponse
 
-from app.api.serializers.posture import (
-    serialize_posture_result,
-)
+from app.api.serializers.posture import serialize_posture_result
 from app.core.dependencies import get_posture_service
 from app.core.exceptions import (
     ImageEncodingError,
@@ -36,22 +29,15 @@ router = APIRouter(
 )
 async def analyze(
     image: UploadFile = File(...),
-    service: PostureService = Depends(
-        get_posture_service
-    ),
+    service: PostureService = Depends(get_posture_service),
 ) -> dict[str, Any] | JSONResponse:
     """Analyze an uploaded image."""
 
     contents = await image.read()
 
     try:
-        frame = decode_image(
-            contents
-        )
-
-        result = service.analyze_frame(
-            frame
-        )
+        frame = decode_image(contents)
+        result = service.analyze_frame(frame)
 
         return serialize_posture_result(
             analysis=result["analysis"],
@@ -61,9 +47,7 @@ async def analyze(
     except InvalidImageError as exc:
         return JSONResponse(
             status_code=400,
-            content={
-                "error": str(exc),
-            },
+            content={"error": str(exc)},
         )
 
     except (
@@ -72,15 +56,11 @@ async def analyze(
     ) as exc:
         return JSONResponse(
             status_code=422,
-            content={
-                "error": str(exc),
-            },
+            content={"error": str(exc)},
         )
 
     except ImageEncodingError as exc:
         return JSONResponse(
             status_code=500,
-            content={
-                "error": str(exc),
-            },
+            content={"error": str(exc)},
         )

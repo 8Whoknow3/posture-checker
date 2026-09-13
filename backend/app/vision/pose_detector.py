@@ -25,7 +25,6 @@ class PoseDetector:
 
     def __init__(self) -> None:
         """Initialize the shared IMAGE detector."""
-
         model_path = self._get_model_path()
 
         if not model_path.exists():
@@ -34,30 +33,24 @@ class PoseDetector:
             )
 
         self._image_detector = self._create_detector(
-            model_path=model_path,
-            running_mode=RunningMode.IMAGE,
+            model_path,
+            RunningMode.IMAGE,
         )
 
     @staticmethod
     def _get_model_path() -> Path:
-        """Return the path to the MediaPipe pose model."""
-
+        """Return the path to the local pose model."""
         backend_dir = Path(__file__).resolve().parents[2]
 
-        return (
-            backend_dir
-            / "models"
-            / "pose_landmarker_full.task"
-        )
+        return backend_dir / "models" / "pose_landmarker_full.task"
 
-    @staticmethod
     def _create_detector(
+        self,
         model_path: Path,
         running_mode: RunningMode,
         callback: Optional[PoseCallback] = None,
     ) -> PoseLandmarker:
-        """Create a MediaPipe PoseLandmarker instance."""
-
+        """Create a PoseLandmarker for the given running mode."""
         base_options = BaseOptions(
             model_asset_path=str(model_path),
         )
@@ -83,48 +76,30 @@ class PoseDetector:
             **options_kwargs
         )
 
-        return PoseLandmarker.create_from_options(
-            options
-        )
+        return PoseLandmarker.create_from_options(options)
 
-    def detect(
-        self,
-        frame,
-    ) -> PoseLandmarkerResult:
+    def detect(self, frame):
         """Detect pose landmarks from an OpenCV BGR frame."""
+        mp_image = self.frame_to_mp_image(frame)
 
-        mp_image = self.frame_to_mp_image(
-            frame
-        )
-
-        return self._image_detector.detect(
-            mp_image
-        )
+        return self._image_detector.detect(mp_image)
 
     def create_live_detector(
         self,
         callback: PoseCallback,
     ) -> PoseLandmarker:
-        """
-        Create a dedicated LIVE_STREAM detector.
-
-        Each WebSocket session should use its own detector.
-        """
-
+        """Create a dedicated LIVE_STREAM detector for a session."""
         model_path = self._get_model_path()
 
         return self._create_detector(
-            model_path=model_path,
-            running_mode=RunningMode.LIVE_STREAM,
-            callback=callback,
+            model_path,
+            RunningMode.LIVE_STREAM,
+            callback,
         )
 
     @staticmethod
-    def frame_to_mp_image(
-        frame,
-    ) -> mp.Image:
+    def frame_to_mp_image(frame) -> mp.Image:
         """Convert an OpenCV BGR frame to a MediaPipe image."""
-
         rgb_frame = cv2.cvtColor(
             frame,
             cv2.COLOR_BGR2RGB,
@@ -137,5 +112,4 @@ class PoseDetector:
 
     def close(self) -> None:
         """Close the shared IMAGE detector."""
-
         self._image_detector.close()

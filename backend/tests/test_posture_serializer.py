@@ -3,7 +3,7 @@ from app.api.serializers.posture import (
 )
 
 
-class TestMetric:
+class FakeMetric:
     """Simple metric object for serializer tests."""
 
     def __init__(
@@ -32,7 +32,7 @@ class TestMetric:
 
 
 def test_serialize_analysis():
-    metric = TestMetric(
+    metric = FakeMetric(
         key="cva",
         title="CVA",
         tier=1,
@@ -78,7 +78,7 @@ def test_serialize_analysis():
 
 
 def test_serialize_unavailable_metric():
-    metric = TestMetric(
+    metric = FakeMetric(
         key="head_tilt",
         title="کجی جانبی سر",
         tier=2,
@@ -123,7 +123,7 @@ def test_serialize_unavailable_metric():
 
 
 def test_serialize_analysis_preserves_none_convention_note():
-    metric = TestMetric(
+    metric = FakeMetric(
         key="trunk_lateral",
         title="کجی جانبی تنه",
         tier=2,

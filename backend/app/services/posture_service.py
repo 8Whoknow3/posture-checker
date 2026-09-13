@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import numpy as np
-
 from app.core.exceptions import (
     PoseNotDetectedError,
     WorldLandmarksUnavailableError,
@@ -16,24 +14,16 @@ from app.vision.pose_detector import PoseDetector
 class PostureService:
     """Coordinate pose detection, posture analysis, and drawing."""
 
-    def __init__(
-        self,
-        detector: PoseDetector,
-    ) -> None:
+    def __init__(self, detector: PoseDetector) -> None:
         self.detector = detector
 
     def analyze_landmarks(
         self,
-        frame: np.ndarray,
-        landmarks_2d: list[Any],
-        landmarks_3d: list[Any],
+        frame: Any,
+        landmarks_2d: Any,
+        landmarks_3d: Any,
     ) -> dict[str, Any]:
-        """
-        Analyze already-detected pose landmarks.
-
-        This method is used by both IMAGE and LIVE_STREAM flows.
-        """
-
+        """Analyze already-detected pose landmarks."""
         height, width = frame.shape[:2]
 
         analysis = analyze_posture(
@@ -66,13 +56,10 @@ class PostureService:
 
     def analyze_frame(
         self,
-        frame: np.ndarray,
+        frame: Any,
     ) -> dict[str, Any]:
-        """Detect and analyze posture from an OpenCV BGR frame."""
-
-        result = self.detector.detect(
-            frame
-        )
+        """Detect and analyze posture from an OpenCV frame."""
+        result = self.detector.detect(frame)
 
         if not result.pose_landmarks:
             raise PoseNotDetectedError(
@@ -85,7 +72,7 @@ class PostureService:
             )
 
         return self.analyze_landmarks(
-            frame=frame,
-            landmarks_2d=result.pose_landmarks[0],
-            landmarks_3d=result.pose_world_landmarks[0],
+            frame,
+            result.pose_landmarks[0],
+            result.pose_world_landmarks[0],
         )
