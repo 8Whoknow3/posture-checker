@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import shutil
 import socket
 import subprocess
 import sys
@@ -13,10 +15,11 @@ BACKEND_DIR = ROOT_DIR / "backend"
 FRONTEND_DIR = ROOT_DIR / "frontend"
 
 BACKEND_HOST = "127.0.0.1"
-BACKEND_PORT = 8000
+# Override with PAW_BACKEND_PORT if 8000 is unavailable (e.g. reserved by Windows).
+BACKEND_PORT = int(os.environ.get("PAW_BACKEND_PORT", "8000"))
 
 FRONTEND_HOST = "127.0.0.1"
-FRONTEND_PORT = 5500
+FRONTEND_PORT = 5173
 
 BACKEND_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}"
 FRONTEND_URL = f"http://{FRONTEND_HOST}:{FRONTEND_PORT}"
@@ -45,6 +48,39 @@ def wait_for_port(
         time.sleep(0.2)
 
     return False
+
+
+def prepare_frontend_command() -> list[str] | None:
+    """Return the Vite dev-server command, installing dependencies if needed."""
+    node = shutil.which("node")
+    npm = shutil.which("npm")
+
+    if node is None or npm is None:
+        print("Node.js and npm are required to run the frontend.")
+        return None
+
+    if not (FRONTEND_DIR / "node_modules").is_dir():
+        print("Installing frontend dependencies...")
+        result = subprocess.run([npm, "install"], cwd=FRONTEND_DIR)
+        if result.returncode != 0:
+            print("npm install failed.")
+            return None
+
+    vite_entry = FRONTEND_DIR / "node_modules" / "vite" / "bin" / "vite.js"
+
+    if not vite_entry.is_file():
+        print(f"Vite not found: {vite_entry}")
+        return None
+
+    return [
+        node,
+        str(vite_entry),
+        "--host",
+        FRONTEND_HOST,
+        "--port",
+        str(FRONTEND_PORT),
+        "--strictPort",
+    ]
 
 
 def stop_process(
@@ -81,7 +117,7 @@ def main() -> int:
         print(f"Frontend port {FRONTEND_PORT} is already in use.")
         return 1
 
-    print("Starting Posture Checker...")
+    print("Starting PAW (Posture Checker)...")
     print()
     print(f"Backend  : {BACKEND_URL}")
     print(f"Swagger  : {SWAGGER_URL}")
@@ -99,14 +135,18 @@ def main() -> int:
         str(BACKEND_PORT),
     ]
 
-    frontend_command = [
-        sys.executable,
-        "-m",
-        "http.server",
-        str(FRONTEND_PORT),
-        "--bind",
-        FRONTEND_HOST,
-    ]
+    frontend_command = prepare_frontend_command()
+
+    if frontend_command is None:
+        return 1
+
+    # run.py always starts the real backend, so turn the mock adapters off.
+    frontend_env = {
+        **os.environ,
+        "VITE_USE_MOCK": "false",
+        "VITE_API_BASE_URL": BACKEND_URL,
+        "VITE_WS_URL": f"ws://{BACKEND_HOST}:{BACKEND_PORT}/ws/posture",
+    }
 
     backend_process: subprocess.Popen[object] | None = None
     frontend_process: subprocess.Popen[object] | None = None
@@ -129,6 +169,7 @@ def main() -> int:
         frontend_process = subprocess.Popen(
             frontend_command,
             cwd=FRONTEND_DIR,
+            env=frontend_env,
         )
 
         if not wait_for_port(

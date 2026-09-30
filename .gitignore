@@ -33,6 +33,9 @@ desktop.ini
 # Logs
 *.log
 
+# Node / Frontend
+node_modules/
+
 # Build / Distribution
 build/
 dist/

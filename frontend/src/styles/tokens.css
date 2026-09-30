@@ -1,0 +1,119 @@
+/* PAW design tokens. Dark values live under [data-theme="dark"]. */
+:root {
+  color-scheme: light;
+
+  /* Color: neutrals */
+  --color-bg: #f5f4f0;
+  --color-surface: #ffffff;
+  --color-surface-2: #efede8;
+  --color-border: #e3e0d8;
+  --color-border-strong: #cfcabf;
+
+  /* Color: ink = heading/strong text. panel = dark solid surfaces. */
+  --color-ink: #17231f;
+  --color-ink-2: #2d3d37;
+  --color-panel: #17231f;
+  --color-text: #24302c;
+  --color-text-muted: #5f6b66;
+
+  /* Color: accent (single) */
+  --color-accent: #0f766e;
+  --color-accent-strong: #0b5f58;
+  --color-accent-soft: #dff2ee;
+  --color-accent-on-dark: #4fd1b9;
+  --color-on-accent: #ffffff;
+
+  /* Color: status */
+  --color-good: #17724f;
+  --color-good-bg: #e4f4ec;
+  --color-caution: #8a5a00;
+  --color-caution-bg: #fdf1d8;
+  --color-poor: #b3261e;
+  --color-poor-bg: #fbe5e3;
+  --color-unavailable: #4f5d73;
+  --color-unavailable-bg: #eceff4;
+
+  /* Glass / overlays */
+  --color-glass: rgba(255, 255, 255, 0.78);
+  --color-glass-border: rgba(255, 255, 255, 0.8);
+  --color-overlay-light: rgba(255, 255, 255, 0.88);
+  --nav-active-bg: var(--color-panel);
+  --nav-active-fg: #ffffff;
+  --page-glow: rgba(15, 118, 110, 0.1);
+
+  /* Typography */
+  --font-sans: "Vazirmatn Variable", "Vazirmatn", system-ui, -apple-system,
+    "Segoe UI", Tahoma, sans-serif;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: clamp(1.75rem, 1.2rem + 2.2vw, 2.75rem);
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Radius & shadow */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgba(23, 35, 31, 0.04), 0 2px 8px rgba(23, 35, 31, 0.04);
+  --shadow-md: 0 1px 2px rgba(23, 35, 31, 0.04),
+    0 14px 32px -10px rgba(23, 35, 31, 0.16);
+
+  --focus-ring: 0 0 0 3px rgba(15, 118, 110, 0.45);
+  --content-width: 1120px;
+  --sidebar-width: 248px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: #0d1311;
+  --color-surface: #151d1a;
+  --color-surface-2: #1d2723;
+  --color-border: #27332f;
+  --color-border-strong: #3a4944;
+
+  --color-ink: #eef3f0;
+  --color-ink-2: #c9d4cf;
+  --color-panel: #1b2622;
+  --color-text: #dbe3df;
+  --color-text-muted: #98a8a1;
+
+  --color-accent: #2bb5a4;
+  --color-accent-strong: #5eddc6;
+  --color-accent-soft: rgba(79, 209, 185, 0.14);
+  --color-accent-on-dark: #4fd1b9;
+  --color-on-accent: #04231f;
+
+  --color-good: #5fd3a0;
+  --color-good-bg: rgba(95, 211, 160, 0.14);
+  --color-caution: #f2b84b;
+  --color-caution-bg: rgba(242, 184, 75, 0.14);
+  --color-poor: #ff8a7d;
+  --color-poor-bg: rgba(255, 138, 125, 0.14);
+  --color-unavailable: #a4b1ab;
+  --color-unavailable-bg: rgba(164, 177, 171, 0.14);
+
+  --color-glass: rgba(21, 29, 26, 0.78);
+  --color-glass-border: rgba(255, 255, 255, 0.06);
+  --color-overlay-light: rgba(21, 29, 26, 0.88);
+  --nav-active-bg: var(--color-accent-soft);
+  --nav-active-fg: var(--color-accent-strong);
+  --page-glow: rgba(79, 209, 185, 0.09);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 32px -10px rgba(0, 0, 0, 0.6);
+
+  --focus-ring: 0 0 0 3px rgba(94, 221, 198, 0.55);
+}

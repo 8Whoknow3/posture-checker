@@ -155,12 +155,10 @@ posture-checker/
 │   ├── requirements.txt
 │   └── requirements-dev.txt
 │
-└── frontend/
+└── frontend/            (PAW UI — see "Frontend (PAW)")
     ├── index.html
-    ├── css/
-    │   └── style.css
-    └── js/
-        └── app.js
+    ├── package.json
+    └── src/
 ```
 
 ## Technologies
@@ -177,11 +175,11 @@ posture-checker/
 
 ### Frontend
 
-* HTML
-* CSS
-* JavaScript
+* React + TypeScript + Vite
+* Plain CSS with design tokens (RTL, Persian-first)
 * WebSocket API
 * MediaDevices API
+* Vitest
 
 ### Testing
 
@@ -262,10 +260,51 @@ The launcher starts both the backend and frontend automatically.
 ### Application URLs
 
 ```text
-Frontend : http://127.0.0.1:5500
+Frontend : http://127.0.0.1:5173
 Backend  : http://127.0.0.1:8000
 Swagger  : http://127.0.0.1:8000/docs
 ```
+
+## Frontend (PAW)
+
+The UI is a React + TypeScript + Vite app called **PAW**. `python run.py` starts it
+with the real backend (port 5173). The UI talks to the backend only through a service layer:
+
+```text
+Pages / components
+        ↓
+State (reducers + hooks)
+        ↓
+services/  PostureService · LiveAnalysisService   (interfaces)
+        ↓
+adapters/  api/ (REST)  ws/ (WebSocket)  mock/ (development only)
+        ↓
+Backend  POST /api/analyze · WS /ws/posture
+```
+
+Backend DTOs (snake_case) are mapped to UI models in `frontend/src/adapters/api/mappers.ts`;
+no other file knows the wire format. The Project Risk Score is displayed exactly as the
+service returns it; unavailable metrics (`value: null`) are shown as `—` / Unavailable.
+
+### Frontend commands
+
+```powershell
+cd frontend
+npm install
+npm run dev        # http://127.0.0.1:5173 (mock adapters by default)
+npm test
+npm run build
+```
+
+### Configuration (`frontend/.env.example`)
+
+| Variable            | Purpose                                                        |
+| ------------------- | -------------------------------------------------------------- |
+| `VITE_USE_MOCK`     | `true` (default) uses development mock adapters; `false` uses the real backend |
+| `VITE_API_BASE_URL` | REST base URL, e.g. `http://127.0.0.1:8000`                    |
+| `VITE_WS_URL`       | WebSocket URL (derived from the API URL when omitted)          |
+
+Adapters are selected in one place: `frontend/src/services/index.ts`.
 
 ## Health Check
 

@@ -262,10 +262,30 @@ python run.py
 ### آدرس‌های پروژه
 
 ```text
-Frontend : http://127.0.0.1:5500
+Frontend : http://127.0.0.1:5173
 Backend  : http://127.0.0.1:8000
 Swagger  : http://127.0.0.1:8000/docs
 ```
+
+## رابط کاربری PAW
+
+فرانت‌اند با React + TypeScript + Vite ساخته شده و نام محصول **PAW** است.
+با `python run.py` همراه Backend واقعی روی پورت 5173 اجرا می‌شود. رابط کاربری فقط از طریق لایهٔ سرویس‌ها با Backend ارتباط می‌گیرد
+(`frontend/src/services` و `frontend/src/adapters`).
+
+```powershell
+cd frontend
+npm install
+npm run dev      # حالت پیش‌فرض: Adapterهای آزمایشی (Mock)
+npm test
+npm run build
+```
+
+تنظیمات در `frontend/.env.example`:
+
+* `VITE_USE_MOCK` ← `false` برای اتصال به Backend واقعی
+* `VITE_API_BASE_URL` ← آدرس REST
+* `VITE_WS_URL` ← آدرس WebSocket
 
 ## بررسی سلامت Backend
 
